@@ -22,8 +22,14 @@ if database_url:
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 else:
     # Local development with SQLite
+    import os
+database_url = os.getenv('DATABASE_URL')
+if database_url:
+    # PostgreSQL in production
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+else:
+    # SQLite locally
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///stockbot.db'
-
 # Flask configuration
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'moksh-trading-bot-secret')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False

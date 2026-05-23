@@ -1,51 +1,54 @@
+import os
+from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from models import db, User, Trade
-from datetime import datetime, timedelta
-import os
+from screener import StockScreener
+from datetime import datetime
 import secrets
-# Add at top:
-# Add these imports at VERY TOP:
 
-from dotenv import load_dotenv
-
+# Load environment variables
 load_dotenv()
 
-# Then change database line from:
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///stockbot.db'
+# Initialize Flask app
+app = Flask(__name__)
 
-# To:
+# Database configuration
 database_url = os.getenv('DATABASE_URL')
 if database_url:
+    # Fix PostgreSQL URL format if needed
     if database_url.startswith('postgresql://'):
         database_url = database_url.replace('postgresql://', 'postgresql+psycopg2://', 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 else:
+    # Local development with SQLite
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///stockbot.db'
 
-# Change database connection:
-database_url = os.getenv('DATABASE_URL')
-if database_url:
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-else:
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///stockbot.db'
-# Initialize Flask app
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///stockbot.db'
-app.config['SECRET_KEY'] = 'your-secret-key-change-this'
+# Flask configuration
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'moksh-trading-bot-secret')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Initialize database
+# Initialize extensions
 db.init_app(app)
-CORS(app)  # Enable CORS for frontend communication
+CORS(app)
+
+# Initialize screener
+screener = StockScreener()
 
 # Create database tables
 with app.app_context():
     db.create_all()
 
-
 # ==================== API ENDPOINTS ====================
 
-# 1. SIGNUP ENDPOINT
+# 1. HEALTH CHECK
+@app.route('/api/health', methods=['GET'])
+def health():
+    """Check if server is running"""
+    return jsonify({'success': True, 'message': 'Server is running'}), 200
+
+
+# 2. SIGNUP ENDPOINT
 @app.route('/api/signup', methods=['POST'])
 def signup():
     """Create a new user account"""
@@ -64,7 +67,7 @@ def signup():
         user = User(
             name=data['name'],
             email=data['email'],
-            zerodha_key=data.get('zerodha_key', None) # Make it optional
+            zerodha_key=data.get('zerodha_key', None)
         )
         user.set_password(data['password'])
 
@@ -74,10 +77,11 @@ def signup():
         return jsonify({'success': True, 'message': 'Signup successful'}), 201
 
     except Exception as e:
+        db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
 
 
-# 2. LOGIN ENDPOINT
+# 3. LOGIN ENDPOINT
 @app.route('/api/login', methods=['POST'])
 def login():
     """Authenticate user and return token"""
@@ -90,7 +94,7 @@ def login():
         if not user or not user.check_password(data['password']):
             return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
 
-        # Generate token (simple version - use JWT in production)
+        # Generate token
         token = secrets.token_hex(16)
 
         return jsonify({
@@ -103,7 +107,7 @@ def login():
         return jsonify({'success': False, 'message': str(e)}), 500
 
 
-# 3. GET USER INFO
+# 4. GET USER INFO
 @app.route('/api/user/<int:user_id>', methods=['GET'])
 def get_user(user_id):
     """Get user information"""
@@ -119,7 +123,7 @@ def get_user(user_id):
         return jsonify({'success': False, 'message': str(e)}), 500
 
 
-# 4. CREATE TRADE
+# 5. CREATE TRADE
 @app.route('/api/trades', methods=['POST'])
 def create_trade():
     """Create a new trade record"""
@@ -140,10 +144,11 @@ def create_trade():
         return jsonify({'success': True, 'trade': trade.to_dict()}), 201
 
     except Exception as e:
+        db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
 
 
-# 5. GET USER'S TRADES
+# 6. GET USER'S TRADES
 @app.route('/api/user/<int:user_id>/trades', methods=['GET'])
 def get_user_trades(user_id):
     """Get all trades for a user"""
@@ -159,7 +164,7 @@ def get_user_trades(user_id):
         return jsonify({'success': False, 'message': str(e)}), 500
 
 
-# 6. UPDATE TRADE
+# 7. UPDATE TRADE
 @app.route('/api/trades/<int:trade_id>', methods=['PUT'])
 def update_trade(trade_id):
     """Update a trade (close it, set exit price)"""
@@ -173,8 +178,6 @@ def update_trade(trade_id):
         if 'exit_price' in data:
             trade.exit_price = data['exit_price']
             trade.exit_time = datetime.utcnow()
-
-            # Calculate profit/loss
             trade.profit_loss = (data['exit_price'] - trade.entry_price) * trade.quantity
             trade.status = 'closed'
 
@@ -183,10 +186,11 @@ def update_trade(trade_id):
         return jsonify({'success': True, 'trade': trade.to_dict()}), 200
 
     except Exception as e:
+        db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
 
 
-# 7. GET USER STATISTICS
+# 8. GET USER STATISTICS
 @app.route('/api/user/<int:user_id>/stats', methods=['GET'])
 def get_stats(user_id):
     """Calculate trading statistics for user"""
@@ -221,31 +225,7 @@ def get_stats(user_id):
         return jsonify({'success': False, 'message': str(e)}), 500
 
 
-# 8. HEALTH CHECK
-@app.route('/api/health', methods=['GET'])
-def health():
-    """Check if server is running"""
-    return jsonify({'success': True, 'message': 'Server is running'}), 200
-
-
-# Error handlers
-@app.errorhandler(404)
-def not_found(error):
-    return jsonify({'success': False, 'message': 'Not found'}), 404
-
-@app.errorhandler(500)
-def server_error(error):
-    return jsonify({'success': False, 'message': 'Server error'}), 500
-
-
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
-
-from screener import StockScreener
-
-screener = StockScreener()
-
-# SCREENER ENDPOINT
+# 9. SCAN STOCKS FOR SIGNALS
 @app.route('/api/scan', methods=['POST'])
 def scan_stocks():
     """Scan stocks for trading signals"""
@@ -266,6 +246,7 @@ def scan_stocks():
         return jsonify({'success': False, 'message': str(e)}), 500
 
 
+# 10. GET SIGNAL FOR SINGLE STOCK
 @app.route('/api/scan/<symbol>', methods=['GET'])
 def scan_single_stock(symbol):
     """Get signal for single stock"""
@@ -283,3 +264,22 @@ def scan_single_stock(symbol):
 
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
+
+
+# ==================== ERROR HANDLERS ====================
+
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({'success': False, 'message': 'Not found'}), 404
+
+
+@app.errorhandler(500)
+def server_error(error):
+    return jsonify({'success': False, 'message': 'Server error'}), 500
+
+
+# ==================== RUN APPLICATION ====================
+
+if __name__ == '__main__':
+    port = int(os.getenv('PORT', 5000))
+    app.run(debug=False, port=port)

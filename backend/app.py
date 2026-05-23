@@ -5,7 +5,23 @@ from datetime import datetime, timedelta
 import os
 import secrets
 # Add at top:
-import os
+# Add these imports at VERY TOP:
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Then change database line from:
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///stockbot.db'
+
+# To:
+database_url = os.getenv('DATABASE_URL')
+if database_url:
+    if database_url.startswith('postgresql://'):
+        database_url = database_url.replace('postgresql://', 'postgresql+psycopg2://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///stockbot.db'
 
 # Change database connection:
 database_url = os.getenv('DATABASE_URL')

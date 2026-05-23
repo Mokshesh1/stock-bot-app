@@ -4,7 +4,15 @@ from models import db, User, Trade
 from datetime import datetime, timedelta
 import os
 import secrets
+# Add at top:
+import os
 
+# Change database connection:
+database_url = os.getenv('DATABASE_URL')
+if database_url:
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///stockbot.db'
 # Initialize Flask app
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///stockbot.db'

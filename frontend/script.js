@@ -1,3 +1,11 @@
+# Add at top:
+const API_URL = 'https://your-railway-url';
+
+# Change all fetches:
+fetch(`${API_URL}/api/login`, ...)
+fetch(`${API_URL}/api/signup`, ...)
+# etc
+
 // Handle Login
 document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();

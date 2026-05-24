@@ -365,7 +365,7 @@ class ScanSingle(Resource):
 from models import db, User, Trade, Watchlist
 import yfinance as yf
 
-@app.route('api/price/<symbol>', methods=['GET'])
+@app.route('/api/price/<symbol>', methods=['GET'])
 
 def get_live_price(symbol):
 

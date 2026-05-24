@@ -6,7 +6,7 @@ from models import db, User, Trade
 from screener import StockScreener
 from datetime import datetime
 import secrets
-from flask_restx import Api, Resource, fields
+from flask_restx import Api
 
 
 # Load environment variables

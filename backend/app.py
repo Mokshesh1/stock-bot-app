@@ -98,22 +98,22 @@ with app.app_context():
 
 # ==================== ROOT ENDPOINT ====================
 
-@app.route('/', methods=['GET'])
-def root():
-    """Root endpoint - API info"""
-    return jsonify({
-        'success': True,
-        'message': 'Stock Trading Bot API',
-        'version': '1.0',
-        'documentation': '/api/docs',
-        'endpoints': {
-            'health': '/api/health',
-            'auth': '/api/signup, /api/login',
-            'users': '/api/user/{user_id}',
-            'trades': '/api/trades, /api/user/{user_id}/trades',
-            'stats': '/api/user/{user_id}/stats',
-        }
-    }), 200
+# @app.route('/', methods=['GET'])
+# def root():
+  #  """Root endpoint - API info"""
+   # return jsonify({
+    #    'success': True,
+     #   'message': 'Stock Trading Bot API',
+      #  'version': '1.0',
+       # 'documentation': '/api/docs',
+        #'endpoints': {
+         #   'health': '/api/health',
+          #  'auth': '/api/signup, /api/login',
+           # 'users': '/api/user/{user_id}',
+            #'trades': '/api/trades, /api/user/{user_id}/trades',
+            #'stats': '/api/user/{user_id}/stats',
+       # }
+   # }), 200
 
 # ==================== HEALTH CHECK ====================
 

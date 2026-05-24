@@ -4,31 +4,74 @@ const API_URL = 'https://stock-bot-app-production.up.railway.app'; // For local 
 
 // Handle Login
 const loginForm = document.getElementById('loginForm');
+
 if (loginForm) {
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
+  loginForm.addEventListener('submit', async (e) => {
 
-        try {
-            const response = await fetch(`https://stock-bot-app-production.up.railway.app/api/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
+    e.preventDefault();
 
-            const data = await response.json();
-            if (data.success) {
-                localStorage.setItem('token', data.token);
-                window.location.href = 'dashboard.html';
-            } else {
-                alert('Invalid credentials');
-            }
-        } catch (error) {
-            console.error('Login error:', error);
-            alert('Login failed. Please try again.');
-        }
-    });
+    const email =
+      document.getElementById('email').value;
+
+    const password =
+      document.getElementById('password').value;
+
+    try {
+
+      const response =
+        await fetch(`${API_URL}/api/login`, {
+          method: 'POST',
+
+          headers: {
+            'Content-Type': 'application/json'
+          },
+
+          body: JSON.stringify({
+            email,
+            password
+          })
+        });
+
+      const data =
+        await response.json();
+
+      if (data.success) {
+
+        localStorage.setItem(
+          'token',
+          data.token
+        );
+
+        localStorage.setItem(
+          'user',
+          JSON.stringify(data.user)
+        );
+
+        window.location.href =
+          'dashboard.html';
+
+      } else {
+
+        alert(
+          data.message || 'Invalid credentials'
+        );
+
+      }
+
+    } catch (error) {
+
+      console.error(
+        'Login error:',
+        error
+      );
+
+      alert(
+        'Login failed. Please try again.'
+      );
+
+    }
+
+  });
 }
 
 // Handle Signup
@@ -64,10 +107,23 @@ if (signupForm) {
 
 // Check if user is logged in
 function checkAuth() {
-    const token = localStorage.getItem('token');
-    if (!token && window.location.pathname.includes('dashboard')) {
-        window.location.href = 'login.html';
-    }
+
+  const token =
+    localStorage.getItem('token');
+
+  const user =
+    localStorage.getItem('user');
+
+  if (
+    (!token || !user) &&
+    window.location.pathname.includes('dashboard')
+  ) {
+
+    window.location.href =
+      'login.html';
+
+  }
+
 }
 
 checkAuth();

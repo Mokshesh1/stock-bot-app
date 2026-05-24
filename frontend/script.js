@@ -82,13 +82,12 @@ if (signupForm) {
         const name = document.getElementById('name').value;
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
-        const zerodha_key = document.getElementById('zerodha_key').value || null;
 
         try {
             const response = await fetch(`https://stock-bot-app-production.up.railway.app/api/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, password, zerodha_key })
+                body: JSON.stringify({ name, email, password})
             });
 
             const data = await response.json();

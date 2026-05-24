@@ -7,11 +7,7 @@ from models import db, User, Trade
 from screener import StockScreener
 from datetime import datetime
 import secrets
-from signal_engine import SignalEngine
-from backtest_engine import BacktestEngine
 
-signal_engine = SignalEngine()
-backtest_engine = BacktestEngine()
 
 # Load environment variables
 load_dotenv()

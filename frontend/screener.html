@@ -1,267 +1,254 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
-<meta charset="UTF-8">
-
+<meta charset="UTF-8" />
 <meta
-name="viewport"
-content="width=device-width, initial-scale=1"
+  name="viewport"
+  content="width=device-width,initial-scale=1.0"
 />
 
-<title>Stock Screener - StockBot</title>
-
-<link
-href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-rel="stylesheet"
-/>
+<title>StockBot Screener</title>
 
 <style>
-
 body{
-background:#f8f9fa;
+font-family:Arial,sans-serif;
+background:#f7f8fc;
+margin:0;
+padding:0;
+}
+
+.container{
+max-width:1200px;
+margin:auto;
+padding:24px;
+}
+
+.topbar{
+display:flex;
+align-items:center;
+gap:12px;
+margin-bottom:16px;
+}
+
+.back-btn{
+background:#fff;
+border:1px solid #ddd;
+padding:10px 14px;
+border-radius:8px;
+cursor:pointer;
+font-size:14px;
+}
+
+.breadcrumb{
+font-size:14px;
+color:#666;
+}
+
+h1{
+margin-top:0;
+}
+
+.search-box{
+display:flex;
+gap:12px;
+margin-bottom:28px;
+}
+
+input{
+flex:1;
+padding:14px;
+font-size:16px;
+border-radius:10px;
+border:1px solid #ddd;
+}
+
+button.primary{
+background:#2563eb;
+color:white;
+border:none;
+padding:14px 18px;
+border-radius:10px;
+cursor:pointer;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(350px,1fr));
+gap:20px;
 }
 
 .card{
-border:none;
+background:white;
 border-radius:14px;
-box-shadow:0 2px 12px rgba(0,0,0,.06);
+padding:20px;
+box-shadow:0 4px 12px rgba(0,0,0,.06);
 }
 
-.strategy-help{
+.symbol{
+font-size:22px;
+font-weight:700;
+}
+
+.signal{
+display:inline-block;
+padding:6px 12px;
+border-radius:999px;
+font-size:13px;
+font-weight:700;
+margin-top:10px;
+}
+
+.buy{
+background:#dcfce7;
+color:#166534;
+}
+
+.sell{
+background:#fee2e2;
+color:#991b1b;
+}
+
+.hold{
+background:#f3f4f6;
+color:#374151;
+}
+
+.score{
+font-size:32px;
+font-weight:700;
+margin-top:12px;
+}
+
+.section{
+margin-top:18px;
 font-size:14px;
-color:#6c757d;
+line-height:1.7;
 }
 
-.signal-buy{
-color:#198754;
+.metrics{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:8px;
+margin-top:12px;
+font-size:14px;
+}
+
+.actions{
+display:flex;
+gap:12px;
+margin-top:18px;
+}
+
+.small-btn{
+flex:1;
+padding:12px;
+border:none;
+border-radius:8px;
+cursor:pointer;
 font-weight:600;
 }
 
-.signal-sell{
-color:#dc3545;
-font-weight:600;
+.watchlist-btn{
+background:#111827;
+color:white;
 }
 
-.back-link{
-text-decoration:none;
-font-weight:500;
+.trade-btn{
+background:#16a34a;
+color:white;
 }
 
+.meta{
+margin-top:14px;
+font-size:12px;
+color:#777;
+}
+
+.loading{
+text-align:center;
+padding:40px;
+color:#666;
+}
 </style>
-
 </head>
+
 <body>
 
-<div class="container py-4">
+<div class="container">
 
-<div class="mb-3">
-
-<a
-href="dashboard.html"
-class="back-link"
->
-← Back to Dashboard
-</a>
-
-</div>
-
-<nav
-aria-label="breadcrumb"
-class="mb-4"
->
-
-<ol class="breadcrumb">
-
-<li class="breadcrumb-item">
-
-<a href="dashboard.html">
-Dashboard
-</a>
-
-</li>
-
-<li
-class="breadcrumb-item active"
-aria-current="page"
->
-Screener
-</li>
-
-</ol>
-
-</nav>
-
-<div class="row justify-content-center">
-
-<div class="col-lg-10">
-
-<h2 class="mb-2">
-📈 Stock Screener
-</h2>
-
-<p class="text-muted mb-4">
-Scan NSE stocks for trade opportunities
-</p>
-
-<div class="card mb-4">
-
-<div class="card-body">
-
-<form id="scanForm">
-
-<label class="form-label">
-Symbols
-</label>
-
-<textarea
-id="symbols"
-class="form-control mb-3"
-rows="3"
->RELIANCE,TCS,INFY,HDFCBANK,ICICIBANK</textarea>
-
-<label class="form-label">
-Strategy
-</label>
-
-<select
-id="strategy"
-class="form-select mb-2"
->
-
-<option value="ema_crossover">
-EMA Crossover
-</option>
-
-<option value="rsi">
-RSI
-</option>
-
-</select>
-
-<div
-id="strategyHelp"
-class="strategy-help mb-3"
->
-Bullish crossover between short and long moving averages
-</div>
+<div class="topbar">
 
 <button
-class="btn btn-primary w-100"
-type="submit"
+class="back-btn"
+onclick="window.location.href='dashboard.html'"
 >
-Run Scan
+← Dashboard
 </button>
-<div class="text-muted small mt-3">
 
-Signals are algorithmic outputs for informational purposes only and do not constitute investment advice.
-
-</div>
-</form>
-
+<div class="breadcrumb">
+Dashboard / Screener
 </div>
 
 </div>
 
-<div
-id="loadingState"
-class="text-center d-none"
+<h1>Stock Screener</h1>
+
+<div class="search-box">
+
+<input
+id="symbolInput"
+placeholder="RELIANCE, INFY, TCS"
+/>
+
+<button
+class="primary"
+onclick="scanStocks()"
 >
-
-<div
-class="spinner-border"
-role="status"
-></div>
-
-<p class="mt-3">
-Scanning stocks...
-</p>
+Scan Stocks
+</button>
 
 </div>
 
 <div
 id="results"
-class="row"
+class="grid"
 ></div>
-
-</div>
-
-</div>
 
 </div>
 
 <script>
 
 const API_URL =
-'https://stock-bot-app-production.up.railway.app';
+'https://stock-bot-app-production.up.railway.app'
 
-const strategyDescriptions = {
+async function scanStocks(){
 
-ema_crossover:
-'Bullish crossover between short and long moving averages.',
-
-rsi:
-'Momentum signal based on overbought and oversold RSI levels.'
-
-};
-
-document
-.getElementById(
-'strategy'
-)
-.addEventListener(
-'change',
-function(){
-
+const input =
 document.getElementById(
-'strategyHelp'
-).textContent =
-strategyDescriptions[
-this.value
-];
+'symbolInput'
+).value.trim()
 
-}
-);
-
-document
-.getElementById(
-'scanForm'
+const symbols = input
+? input.split(',').map(
+s => s.trim().toUpperCase()
 )
-.addEventListener(
-'submit',
-async function(e){
+: [
+'RELIANCE',
+'TCS',
+'INFY',
+'HDFCBANK'
+]
 
-e.preventDefault();
-
-document
-.getElementById(
+const container =
+document.getElementById(
 'results'
-).innerHTML='';
-
-document
-.getElementById(
-'loadingState'
-).classList.remove(
-'d-none'
-);
-
-const symbols =
-document
-.getElementById(
-'symbols'
 )
-.value
-.split(',')
-.map(
-s=>s.trim()
-);
 
-const strategy =
-document
-.getElementById(
-'strategy'
-)
-.value;
+container.innerHTML = `
+<div class="loading">
+Scanning market...
+</div>
+`
 
 try{
 
@@ -270,212 +257,238 @@ await fetch(
 `${API_URL}/api/scan`,
 {
 method:'POST',
-
 headers:{
 'Content-Type':
 'application/json'
 },
-
 body:JSON.stringify({
-symbols,
-strategy
+symbols
 })
-
 }
-);
+)
 
 const data =
-await response.json();
+await response.json()
 
 renderResults(
-data.results || []
-);
+data.results
+)
 
-}finally{
+}catch(err){
 
-document
-.getElementById(
-'loadingState'
-).classList.add(
-'d-none'
-);
+container.innerHTML =
+'Error loading signals'
 
 }
 
 }
-);
 
 function renderResults(results){
 
 const container =
 document.getElementById(
 'results'
-);
+)
 
-container.innerHTML='';
+container.innerHTML=''
 
-if(!results.length){
+results.forEach(stock=>{
 
-container.innerHTML=`
-
-<div class="col-12">
-
-<div class="alert alert-light">
-
-No signals found.
-
-</div>
-
-</div>
-
-`;
-
-return;
-
-}
-
-results.forEach(result=>{
+const signalClass =
+stock.signal.toLowerCase()
 
 container.innerHTML += `
 
-<div class="col-md-6 col-lg-4 mb-4">
+<div class="card">
 
-<div class="card h-100">
+<div class="symbol">
+${stock.symbol}
+</div>
 
-<div class="card-body d-flex flex-column">
+<div class="signal ${signalClass}">
+${stock.signal}
+</div>
 
-<h5>
-${result.symbol}
-</h5>
+<div class="score">
+${stock.score}/100
+</div>
 
-<p class="${
-result.signal === 'BUY'
-? 'signal-buy'
-: 'signal-sell'
-}">
-${result.signal}
-</p>
+<div class="section">
 
-<p class="text-muted mb-4">
-Strategy:
-${result.strategy || ''}
-</p>
+<strong>Trend:</strong>
+${stock.trend}
 
-<div class="mt-auto d-flex gap-2">
+<br>
+
+<strong>Live Price:</strong>
+₹${stock.price}
+
+</div>
+
+<div class="metrics">
+
+<div>
+Technical:
+<b>${stock.technical_score}</b>
+</div>
+
+<div>
+Fundamental:
+<b>${stock.fundamental_score}</b>
+</div>
+
+<div>
+Sentiment:
+<b>${stock.sentiment_score}</b>
+</div>
+
+<div>
+Grade:
+<b>${stock.fundamental_grade}</b>
+</div>
+
+</div>
+
+<div class="section">
+
+<strong>Trade Setup</strong>
+
+<br>
+
+Entry:
+₹${stock.entry}
+
+<br>
+
+TP1:
+₹${stock.tp1}
+
+<br>
+
+TP2:
+₹${stock.tp2}
+
+<br>
+
+Stop Loss:
+₹${stock.stop_loss}
+
+</div>
+
+<div class="section">
+
+<strong>Why this signal?</strong>
+
+<br>
+
+${stock.explanation.technical}
+
+<br>
+
+${stock.explanation.fundamental}
+
+<br>
+
+${stock.explanation.sentiment}
+
+</div>
+
+<div class="actions">
 
 <button
-class="btn btn-outline-dark btn-sm"
+class="small-btn watchlist-btn"
 onclick="addToWatchlist(
-'${result.symbol}'
+'${stock.symbol}'
 )"
 >
-⭐ Watchlist
++ Watchlist
 </button>
 
 <button
-class="btn btn-success btn-sm"
+class="small-btn trade-btn"
 onclick="tradeNow(
-'${result.symbol}'
+'${stock.symbol}',
+${stock.entry}
 )"
 >
-Trade
+Paper Trade
 </button>
 
 </div>
 
-</div>
+<div class="meta">
+
+Generated from predefined
+technical, fundamental,
+and sentiment models for
+educational purposes only.
+
+<br><br>
+
+Updated:
+${new Date(
+stock.last_updated
+).toLocaleString()}
 
 </div>
 
 </div>
 
-`;
+`
 
-});
+})
 
 }
 
-async function addToWatchlist(symbol){
+async function addToWatchlist(
+symbol
+){
 
 const user =
 JSON.parse(
 localStorage.getItem(
 'user'
 )
-);
+)
 
-if(!user)return;
+if(!user)return
 
 await fetch(
+
 `${API_URL}/api/user/${user.id}/watchlist`,
+
 {
 method:'POST',
-
 headers:{
 'Content-Type':
 'application/json'
 },
-
 body:JSON.stringify({
 symbol
 })
-
 }
-);
+
+)
 
 alert(
 `${symbol} added to watchlist`
-);
+)
 
 }
 
-function tradeNow(symbol){
+function tradeNow(
+symbol,
+entry
+){
 
 window.location.href =
-`paper-trade.html?symbol=${symbol}`;
+`paper-trade.html?symbol=${symbol}&price=${entry}`
 
 }
+
+scanStocks()
 
 </script>
 
 </body>
-<footer class="mt-5 py-4 border-top bg-white">
-
-<div class="container">
-
-<div class="row">
-
-<div class="col-md-6 text-md-end">
-<a
-href="about.html"
-class="text-decoration-none me-3"
->
-About
-</a>
-<a
-href="terms.html"
-class="text-decoration-none me-3"
->
-Terms
-</a>
-
-<a
-href="privacy.html"
-class="text-decoration-none me-3"
->
-Privacy
-</a>
-
-<a
-href="disclaimer.html"
-class="text-decoration-none"
->
-Disclaimer
-</a>
-
-</div>
-
-</div>
-
-</div>
 </html>

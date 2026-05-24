@@ -7,6 +7,11 @@ from models import db, User, Trade
 from screener import StockScreener
 from datetime import datetime
 import secrets
+from signal_engine import SignalEngine
+from backtest_engine import BacktestEngine
+
+signal_engine = SignalEngine()
+backtest_engine = BacktestEngine()
 
 # Load environment variables
 load_dotenv()
@@ -340,24 +345,35 @@ class ScanStocks(Resource):
 
 @scan_ns.route('/<symbol>')
 class ScanSingle(Resource):
-    @api.doc('scan_single_stock')
-    def get(self, symbol):
-        """Get signal for single stock"""
+
+    def get(
+        self,
+        symbol
+    ):
+
         try:
-            strategy = request.args.get('strategy', 'ema_crossover')
 
-            if strategy == 'ema_crossover':
-                result = screener.ema_crossover_signal(symbol)
-            elif strategy == 'rsi':
-                result = screener.rsi_signal(symbol)
-            else:
-                result = {'symbol': symbol, 'signal': 'UNKNOWN'}
+            result = screener.get_signal(
+                symbol
+            )
 
-            return {'success': True, 'data': result}, 200
+            return {
+
+                'success': True,
+
+                'data': result
+
+            }, 200
 
         except Exception as e:
-            return {'success': False, 'message': str(e)}, 500
 
+            return {
+
+                'success': False,
+
+                'message': str(e)
+
+            }, 500
 
 # Full app.py is large, so keep your existing file
 # and ADD these routes below your current trade routes.

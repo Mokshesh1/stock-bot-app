@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Backtest Strategy</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f7f8fc;
+margin:0;
+}
+
+.container{
+max-width:1100px;
+margin:auto;
+padding:24px;
+}
+
+.card{
+background:white;
+padding:24px;
+border-radius:14px;
+margin-bottom:20px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:16px;
+}
+
+input,select,button{
+padding:12px;
+width:100%;
+margin-bottom:12px;
+}
+
+button{
+background:#2563eb;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+td,th{
+padding:12px;
+border-bottom:1px solid #eee;
+text-align:left;
+}
+
+.back-btn{
+margin-bottom:20px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<button
+class="back-btn"
+onclick="window.location.href='dashboard.html'"
+>
+← Dashboard
+</button>
+
+<div class="card">
+
+<h1>
+Strategy Backtesting
+</h1>
+
+<input
+id="symbol"
+placeholder="RELIANCE"
+/>
+
+<select id="strategy">
+
+<option value="ema_crossover">
+EMA Crossover
+</option>
+
+<option value="rsi">
+RSI Oversold
+</option>
+
+</select>
+
+<select id="days">
+
+<option value="90">
+3 Months
+</option>
+
+<option value="180">
+6 Months
+</option>
+
+<option value="365">
+1 Year
+</option>
+
+</select>
+
+<button
+onclick="runBacktest()"
+>
+Run Backtest
+</button>
+
+</div>
+
+<div id="results"></div>
+
+</div>
+
+<script>
+
+const API_URL =
+'https://stock-bot-app-production.up.railway.app'
+
+async function runBacktest(){
+
+const symbol =
+document.getElementById(
+'symbol'
+).value.toUpperCase()
+
+const strategy =
+document.getElementById(
+'strategy'
+).value
+
+const days =
+document.getElementById(
+'days'
+).value
+
+const response =
+await fetch(
+
+`${API_URL}/api/backtest`,
+
+{
+method:'POST',
+headers:{
+'Content-Type':
+'application/json'
+},
+body:JSON.stringify({
+
+symbol,
+strategy,
+days
+
+})
+}
+
+)
+
+const data =
+await response.json()
+
+renderResults(
+data.result
+)
+
+}
+
+function renderResults(result){
+
+document.getElementById(
+'results'
+).innerHTML = `
+
+<div class="card">
+
+<h2>
+${result.symbol}
+—
+${result.strategy}
+</h2>
+
+<div class="grid">
+
+<div>
+Total Trades:
+<b>${result.total_trades}</b>
+</div>
+
+<div>
+Win Rate:
+<b>${result.win_rate}%</b>
+</div>
+
+<div>
+Total Return:
+<b>${result.total_return}%</b>
+</div>
+
+<div>
+Avg Return:
+<b>${result.avg_return}%</b>
+</div>
+
+<div>
+Max Drawdown:
+<b>${result.max_drawdown}%</b>
+</div>
+
+<div>
+Expectancy:
+<b>${result.expectancy}%</b>
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h3>
+Trade History
+</h3>
+
+<table>
+
+<tr>
+
+<th>
+Entry
+</th>
+
+<th>
+Exit
+</th>
+
+<th>
+Return %
+</th>
+
+</tr>
+
+${result.trades.map(t=>`
+
+<tr>
+
+<td>
+₹${t.entry}
+</td>
+
+<td>
+₹${t.exit}
+</td>
+
+<td>
+${t.return}%
+</td>
+
+</tr>
+
+`).join('')}
+
+</table>
+
+</div>
+`
+
+}
+
+</script>
+
+</body>
+</html>

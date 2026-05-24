@@ -2,19 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta
-  name="viewport"
-  content="width=device-width,initial-scale=1.0"
-/>
-
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
 <title>StockBot Screener</title>
 
 <style>
 body{
-font-family:Arial,sans-serif;
+font-family:Arial;
 background:#f7f8fc;
 margin:0;
-padding:0;
 }
 
 .container{
@@ -25,76 +20,60 @@ padding:24px;
 
 .topbar{
 display:flex;
-align-items:center;
 gap:12px;
-margin-bottom:16px;
+align-items:center;
+margin-bottom:20px;
 }
 
 .back-btn{
-background:#fff;
-border:1px solid #ddd;
 padding:10px 14px;
 border-radius:8px;
+border:1px solid #ddd;
+background:white;
 cursor:pointer;
-font-size:14px;
-}
-
-.breadcrumb{
-font-size:14px;
-color:#666;
-}
-
-h1{
-margin-top:0;
 }
 
 .search-box{
 display:flex;
 gap:12px;
-margin-bottom:28px;
+margin-bottom:24px;
 }
 
 input{
 flex:1;
 padding:14px;
-font-size:16px;
 border-radius:10px;
 border:1px solid #ddd;
 }
 
 button.primary{
+padding:14px 18px;
 background:#2563eb;
 color:white;
 border:none;
-padding:14px 18px;
 border-radius:10px;
 cursor:pointer;
 }
 
 .grid{
 display:grid;
-grid-template-columns:repeat(auto-fill,minmax(350px,1fr));
+grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
 gap:20px;
 }
 
 .card{
 background:white;
-border-radius:14px;
 padding:20px;
+border-radius:14px;
 box-shadow:0 4px 12px rgba(0,0,0,.06);
 }
 
-.symbol{
-font-size:22px;
-font-weight:700;
-}
-
 .signal{
-display:inline-block;
-padding:6px 12px;
+padding:6px 10px;
 border-radius:999px;
-font-size:13px;
-font-weight:700;
+display:inline-block;
+font-size:12px;
+font-weight:bold;
 margin-top:10px;
 }
 
@@ -113,35 +92,15 @@ background:#f3f4f6;
 color:#374151;
 }
 
-.score{
-font-size:32px;
-font-weight:700;
-margin-top:12px;
-}
-
-.section{
-margin-top:18px;
-font-size:14px;
-line-height:1.7;
-}
-
-.metrics{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:8px;
-margin-top:12px;
-font-size:14px;
-}
-
 .actions{
 display:flex;
-gap:12px;
-margin-top:18px;
+gap:8px;
+margin-top:16px;
 }
 
 .small-btn{
 flex:1;
-padding:12px;
+padding:10px;
 border:none;
 border-radius:8px;
 cursor:pointer;
@@ -158,16 +117,32 @@ background:#16a34a;
 color:white;
 }
 
-.meta{
-margin-top:14px;
-font-size:12px;
-color:#777;
+.alert-btn{
+background:#f59e0b;
+color:white;
 }
 
-.loading{
-text-align:center;
-padding:40px;
-color:#666;
+.modal{
+display:none;
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.45);
+justify-content:center;
+align-items:center;
+}
+
+.modal-content{
+background:white;
+padding:24px;
+width:400px;
+border-radius:14px;
+}
+
+select{
+width:100%;
+padding:12px;
+margin-top:10px;
+margin-bottom:10px;
 }
 </style>
 </head>
@@ -177,7 +152,6 @@ color:#666;
 <div class="container">
 
 <div class="topbar">
-
 <button
 class="back-btn"
 onclick="window.location.href='dashboard.html'"
@@ -185,16 +159,14 @@ onclick="window.location.href='dashboard.html'"
 ← Dashboard
 </button>
 
-<div class="breadcrumb">
+<div>
 Dashboard / Screener
 </div>
-
 </div>
 
 <h1>Stock Screener</h1>
 
 <div class="search-box">
-
 <input
 id="symbolInput"
 placeholder="RELIANCE, INFY, TCS"
@@ -206,7 +178,6 @@ onclick="scanStocks()"
 >
 Scan Stocks
 </button>
-
 </div>
 
 <div
@@ -216,10 +187,116 @@ class="grid"
 
 </div>
 
+<div
+id="alertModal"
+class="modal"
+>
+
+<div class="modal-content">
+
+<h3>Create Alert</h3>
+
+<select id="alertType">
+
+<option value="buy_signal">
+BUY Signal
+</option>
+
+<option value="sell_signal">
+SELL Signal
+</option>
+
+<option value="score_above">
+Score Above
+</option>
+
+<option value="price_above">
+Price Above
+</option>
+
+<option value="price_below">
+Price Below
+</option>
+
+</select>
+
+<input
+id="alertValue"
+placeholder="Optional target value"
+/>
+
+<button
+class="primary"
+onclick="saveAlert()"
+>
+Save Alert
+</button>
+
+</div>
+
+</div>
+
 <script>
 
 const API_URL =
 'https://stock-bot-app-production.up.railway.app'
+
+let selectedSymbol=''
+
+function openAlert(symbol){
+
+selectedSymbol=symbol
+
+document.getElementById(
+'alertModal'
+).style.display='flex'
+
+}
+
+async function saveAlert(){
+
+const user = JSON.parse(
+localStorage.getItem('user')
+)
+
+const alert_type =
+document.getElementById(
+'alertType'
+).value
+
+const target_value =
+document.getElementById(
+'alertValue'
+).value || null
+
+await fetch(
+
+`${API_URL}/api/user/${user.id}/alerts`,
+
+{
+method:'POST',
+headers:{
+'Content-Type':
+'application/json'
+},
+body:JSON.stringify({
+symbol:selectedSymbol,
+alert_type,
+target_value
+})
+}
+
+)
+
+alert(
+'Alert created'
+)
+
+document.getElementById(
+'alertModal'
+).style.display='none'
+
+}
 
 async function scanStocks(){
 
@@ -230,31 +307,14 @@ document.getElementById(
 
 const symbols = input
 ? input.split(',').map(
-s => s.trim().toUpperCase()
+s=>s.trim()
 )
-: [
-'RELIANCE',
-'TCS',
-'INFY',
-'HDFCBANK'
-]
+: ['RELIANCE','INFY','TCS']
 
-const container =
-document.getElementById(
-'results'
-)
+const res = await fetch(
 
-container.innerHTML = `
-<div class="loading">
-Scanning market...
-</div>
-`
-
-try{
-
-const response =
-await fetch(
 `${API_URL}/api/scan`,
+
 {
 method:'POST',
 headers:{
@@ -265,21 +325,15 @@ body:JSON.stringify({
 symbols
 })
 }
+
 )
 
 const data =
-await response.json()
+await res.json()
 
 renderResults(
 data.results
 )
-
-}catch(err){
-
-container.innerHTML =
-'Error loading signals'
-
-}
 
 }
 
@@ -294,164 +348,67 @@ container.innerHTML=''
 
 results.forEach(stock=>{
 
-const signalClass =
-stock.signal.toLowerCase()
-
 container.innerHTML += `
 
 <div class="card">
 
-<div class="symbol">
-${stock.symbol}
-</div>
+<h2>${stock.symbol}</h2>
 
-<div class="signal ${signalClass}">
+<div class="signal ${stock.signal.toLowerCase()}">
 ${stock.signal}
 </div>
 
-<div class="score">
-${stock.score}/100
-</div>
+<p>
+Score:
+<b>${stock.score}</b>
+</p>
 
-<div class="section">
-
-<strong>Trend:</strong>
-${stock.trend}
-
-<br>
-
-<strong>Live Price:</strong>
+<p>
+Price:
 ₹${stock.price}
+</p>
 
-</div>
-
-<div class="metrics">
-
-<div>
-Technical:
-<b>${stock.technical_score}</b>
-</div>
-
-<div>
-Fundamental:
-<b>${stock.fundamental_score}</b>
-</div>
-
-<div>
-Sentiment:
-<b>${stock.sentiment_score}</b>
-</div>
-
-<div>
-Grade:
-<b>${stock.fundamental_grade}</b>
-</div>
-
-</div>
-
-<div class="section">
-
-<strong>Trade Setup</strong>
-
-<br>
-
-Entry:
-₹${stock.entry}
-
-<br>
-
-TP1:
-₹${stock.tp1}
-
-<br>
-
-TP2:
-₹${stock.tp2}
-
-<br>
-
-Stop Loss:
-₹${stock.stop_loss}
-
-</div>
-
-<div class="section">
-
-<strong>Why this signal?</strong>
-
-<br>
-
-${stock.explanation.technical}
-
-<br>
-
-${stock.explanation.fundamental}
-
-<br>
-
-${stock.explanation.sentiment}
-
-</div>
+<p>
+Trend:
+${stock.trend}
+</p>
 
 <div class="actions">
 
 <button
 class="small-btn watchlist-btn"
-onclick="addToWatchlist(
-'${stock.symbol}'
-)"
+onclick="addToWatchlist('${stock.symbol}')"
 >
-+ Watchlist
+Watchlist
 </button>
 
 <button
 class="small-btn trade-btn"
-onclick="tradeNow(
-'${stock.symbol}',
-${stock.entry}
-)"
+onclick="tradeNow('${stock.symbol}',${stock.entry})"
 >
 Paper Trade
 </button>
 
-</div>
-
-<div class="meta">
-
-Generated from predefined
-technical, fundamental,
-and sentiment models for
-educational purposes only.
-
-<br><br>
-
-Updated:
-${new Date(
-stock.last_updated
-).toLocaleString()}
+<button
+class="small-btn alert-btn"
+onclick="openAlert('${stock.symbol}')"
+>
+Create Alert
+</button>
 
 </div>
 
 </div>
-
 `
-
 })
 
 }
 
-async function addToWatchlist(
-symbol
-){
+async function addToWatchlist(symbol){
 
-const user =
-JSON.parse(
-localStorage.getItem(
-'user'
+const user = JSON.parse(
+localStorage.getItem('user')
 )
-)
-
-if(!user)return
 
 await fetch(
 
@@ -470,19 +427,14 @@ symbol
 
 )
 
-alert(
-`${symbol} added to watchlist`
-)
+alert('Added to watchlist')
 
 }
 
-function tradeNow(
-symbol,
-entry
-){
+function tradeNow(symbol,price){
 
-window.location.href =
-`paper-trade.html?symbol=${symbol}&price=${entry}`
+window.location.href=
+`paper-trade.html?symbol=${symbol}&price=${price}`
 
 }
 

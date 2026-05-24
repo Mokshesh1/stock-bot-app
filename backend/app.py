@@ -3,10 +3,11 @@ from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_restx import Api, Resource, fields, Namespace
-from models import db, User, Trade
+from models import db, User, Trade, Watchlist, Alert
 from screener import StockScreener
 from datetime import datetime
 import secrets
+
 
 
 # Load environment variables
@@ -477,6 +478,221 @@ def add_watchlist(user_id):
 
     })
 
+# ==================== ALERTS ====================
+
+@app.route(
+    '/api/user/<int:user_id>/alerts',
+    methods=['GET']
+)
+def get_alerts(user_id):
+
+    alerts = Alert.query.filter_by(
+        user_id=user_id
+    ).order_by(
+        Alert.created_at.desc()
+    ).all()
+
+    return jsonify({
+
+        'success': True,
+
+        'alerts': [
+
+            alert.to_dict()
+            for alert in alerts
+
+        ]
+
+    })
+
+
+@app.route(
+    '/api/user/<int:user_id>/alerts',
+    methods=['POST']
+)
+def create_alert(user_id):
+
+    try:
+
+        data = request.json
+
+        alert = Alert(
+
+            user_id=user_id,
+
+            symbol=data['symbol'].upper(),
+
+            alert_type=data['alert_type'],
+
+            target_value=data.get(
+                'target_value'
+            )
+
+        )
+
+        db.session.add(alert)
+
+        db.session.commit()
+
+        return jsonify({
+
+            'success': True,
+
+            'alert':
+                alert.to_dict()
+
+        }), 201
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        return jsonify({
+
+            'success': False,
+
+            'message': str(e)
+
+        }), 500
+
+
+@app.route(
+    '/api/user/<int:user_id>/alerts/<int:alert_id>',
+    methods=['DELETE']
+)
+def delete_alert(
+    user_id,
+    alert_id
+):
+
+    alert = Alert.query.filter_by(
+
+        id=alert_id,
+        user_id=user_id
+
+    ).first()
+
+    if not alert:
+
+        return jsonify({
+
+            'success': False,
+            'message':
+                'Alert not found'
+
+        }), 404
+
+    db.session.delete(alert)
+
+    db.session.commit()
+
+    return jsonify({
+
+        'success': True
+
+    })
+
+
+@app.route(
+    '/api/user/<int:user_id>/alerts/check',
+    methods=['GET']
+)
+def check_alerts(user_id):
+
+    alerts = Alert.query.filter_by(
+
+        user_id=user_id,
+        is_triggered=False
+
+    ).all()
+
+    triggered = []
+
+    for alert in alerts:
+
+        try:
+
+            result = screener.scan_stock(
+                alert.symbol
+            )
+
+            if not result:
+                continue
+
+            should_trigger = False
+
+            if alert.alert_type == 'buy_signal':
+
+                if result.get(
+                    'signal'
+                ) == 'BUY':
+
+                    should_trigger = True
+
+            elif alert.alert_type == 'sell_signal':
+
+                if result.get(
+                    'signal'
+                ) == 'SELL':
+
+                    should_trigger = True
+
+            elif alert.alert_type == 'score_above':
+
+                if result.get(
+                    'score', 0
+                ) >= float(
+                    alert.target_value
+                ):
+
+                    should_trigger = True
+
+            elif alert.alert_type == 'price_above':
+
+                if result.get(
+                    'price', 0
+                ) >= float(
+                    alert.target_value
+                ):
+
+                    should_trigger = True
+
+            elif alert.alert_type == 'price_below':
+
+                if result.get(
+                    'price', 0
+                ) <= float(
+                    alert.target_value
+                ):
+
+                    should_trigger = True
+
+            if should_trigger:
+
+                alert.is_triggered = True
+
+                alert.triggered_at = datetime.utcnow()
+
+                triggered.append(
+                    alert.to_dict()
+                )
+
+        except Exception as e:
+
+            print(
+                f'Alert check failed: {e}'
+            )
+
+    db.session.commit()
+
+    return jsonify({
+
+        'success': True,
+
+        'triggered_alerts':
+            triggered
+
+    })
 
 @app.route(
     '/api/user/<int:user_id>/analytics'

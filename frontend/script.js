@@ -124,5 +124,73 @@ function checkAuth() {
   }
 
 }
+async function loadAlerts(){
 
+const user =
+JSON.parse(
+localStorage.getItem(
+'user'
+)
+)
+
+if(!user)return
+
+const response =
+await fetch(
+
+`${API_URL}/api/user/${user.id}/alerts/check`
+
+)
+
+const data =
+await response.json()
+
+const el =
+document.getElementById(
+'alertsList'
+)
+
+if(
+!data.triggered_alerts ||
+!data.triggered_alerts.length
+){
+
+el.innerHTML =
+'No alerts triggered'
+
+return
+
+}
+
+el.innerHTML =
+data.triggered_alerts
+.map(alert=>`
+
+<div
+style="
+padding:10px;
+margin-bottom:8px;
+background:#fff7ed;
+border-radius:8px;
+"
+>
+
+🔔
+
+${alert.symbol}
+
+—
+
+${alert.alert_type.replace(
+'_',
+' '
+)}
+
+</div>
+
+`).join('')
+
+}
+
+loadAlerts()
 checkAuth();

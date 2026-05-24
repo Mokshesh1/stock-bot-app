@@ -2,12 +2,11 @@ import os
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from flask_restx import Api, Resource, fields, Namespace
 from models import db, User, Trade
 from screener import StockScreener
 from datetime import datetime
 import secrets
-from flask_restx import Api
-
 
 # Load environment variables
 load_dotenv()
@@ -24,14 +23,8 @@ if database_url:
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 else:
     # Local development with SQLite
-    import os
-database_url = os.getenv('DATABASE_URL')
-if database_url:
-    # PostgreSQL in production
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-else:
-    # SQLite locally
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///stockbot.db'
+
 # Flask configuration
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'moksh-trading-bot-secret')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -39,6 +32,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # Initialize extensions
 db.init_app(app)
 CORS(app)
+
 # Initialize Flask-RESTX for Swagger documentation
 api = Api(
     app,
@@ -48,250 +42,332 @@ api = Api(
     doc='/api/docs',  # Swagger UI at /api/docs
     prefix='/api'
 )
-# Initialize screener
+
+# Create namespaces for organizing endpoints
+auth_ns = api.namespace('', description='Authentication endpoints')
+user_ns = api.namespace('user', description='User management')
+trade_ns = api.namespace('trades', description='Trade management')
+scan_ns = api.namespace('scan', description='Stock screening')
+
+# Define models for Swagger documentation
+user_model = api.model('User', {
+    'id': fields.Integer(description='User ID'),
+    'name': fields.String(required=True, description='Full name'),
+    'email': fields.String(required=True, description='Email address'),
+    'subscription_tier': fields.String(description='Subscription tier: free, starter, pro'),
+    'created_at': fields.String(description='Creation timestamp'),
+})
+
+trade_model = api.model('Trade', {
+    'id': fields.Integer(description='Trade ID'),
+    'symbol': fields.String(required=True, description='Stock symbol'),
+    'entry_price': fields.Float(required=True, description='Entry price'),
+    'exit_price': fields.Float(description='Exit price'),
+    'quantity': fields.Integer(required=True, description='Number of shares'),
+    'profit_loss': fields.Float(description='Profit or loss amount'),
+    'strategy': fields.String(required=True, description='Strategy used'),
+    'status': fields.String(description='Trade status: open, closed'),
+})
+
+signup_model = api.model('Signup', {
+    'name': fields.String(required=True, description='Full name'),
+    'email': fields.String(required=True, description='Email address'),
+    'password': fields.String(required=True, description='Password'),
+    'zerodha_key': fields.String(description='Zerodha API key (optional)'),
+})
+
+login_model = api.model('Login', {
+    'email': fields.String(required=True, description='Email address'),
+    'password': fields.String(required=True, description='Password'),
+})
+
+trade_input_model = api.model('TradeInput', {
+    'user_id': fields.Integer(required=True, description='User ID'),
+    'symbol': fields.String(required=True, description='Stock symbol'),
+    'entry_price': fields.Float(required=True, description='Entry price'),
+    'quantity': fields.Integer(required=True, description='Number of shares'),
+    'strategy': fields.String(required=True, description='Strategy name'),
+})
+
+# Initialize screener (commented out if having issues)
 screener = StockScreener()
 
 # Create database tables
 with app.app_context():
     db.create_all()
 
-# ==================== API ENDPOINTS ====================
+# ==================== ROOT ENDPOINT ====================
 
-# 1. HEALTH CHECK
-@app.route('/api/health', methods=['GET'])
-def health():
-    """Check if server is running"""
-    return jsonify({'success': True, 'message': 'Server is running'}), 200
+@app.route('/', methods=['GET'])
+def root():
+    """Root endpoint - API info"""
+    return jsonify({
+        'success': True,
+        'message': 'Stock Trading Bot API',
+        'version': '1.0',
+        'documentation': '/api/docs',
+        'endpoints': {
+            'health': '/api/health',
+            'auth': '/api/signup, /api/login',
+            'users': '/api/user/{user_id}',
+            'trades': '/api/trades, /api/user/{user_id}/trades',
+            'stats': '/api/user/{user_id}/stats',
+        }
+    }), 200
 
+# ==================== HEALTH CHECK ====================
 
-# 2. SIGNUP ENDPOINT
-@app.route('/api/signup', methods=['POST'])
-def signup():
-    """Create a new user account"""
-    try:
-        data = request.json
+@auth_ns.route('/health')
+class Health(Resource):
+    def get(self):
+        """Check if server is running"""
+        return {'success': True, 'message': 'Server is running'}, 200
 
-        # Validate input
-        if not data.get('email') or not data.get('password') or not data.get('name'):
-            return jsonify({'success': False, 'message': 'Missing required fields'}), 400
+# ==================== AUTHENTICATION ====================
 
-        # Check if user already exists
-        if User.query.filter_by(email=data['email']).first():
-            return jsonify({'success': False, 'message': 'Email already registered'}), 400
+@auth_ns.route('/signup')
+class Signup(Resource):
+    @api.doc('signup')
+    @api.expect(signup_model)
+    def post(self):
+        """Create a new user account"""
+        try:
+            data = request.json
 
-        # Create new user
-        user = User(
-            name=data['name'],
-            email=data['email'],
-            zerodha_key=data.get('zerodha_key', None)
-        )
-        user.set_password(data['password'])
+            # Validate input
+            if not data.get('email') or not data.get('password') or not data.get('name'):
+                return {'success': False, 'message': 'Missing required fields'}, 400
 
-        db.session.add(user)
-        db.session.commit()
+            # Check if user already exists
+            if User.query.filter_by(email=data['email']).first():
+                return {'success': False, 'message': 'Email already registered'}, 400
 
-        return jsonify({'success': True, 'message': 'Signup successful'}), 201
+            # Create new user
+            user = User(
+                name=data['name'],
+                email=data['email'],
+                zerodha_key=data.get('zerodha_key', None)
+            )
+            user.set_password(data['password'])
 
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)}), 500
+            db.session.add(user)
+            db.session.commit()
 
+            return {'success': True, 'message': 'Signup successful'}, 201
 
-# 3. LOGIN ENDPOINT
-@app.route('/api/login', methods=['POST'])
-def login():
-    """Authenticate user and return token"""
-    try:
-        data = request.json
-
-        # Find user
-        user = User.query.filter_by(email=data['email']).first()
-
-        if not user or not user.check_password(data['password']):
-            return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
-
-        # Generate token
-        token = secrets.token_hex(16)
-
-        return jsonify({
-            'success': True,
-            'token': token,
-            'user': user.to_dict()
-        }), 200
-
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
+        except Exception as e:
+            db.session.rollback()
+            return {'success': False, 'message': str(e)}, 500
 
 
-# 4. GET USER INFO
-@app.route('/api/user/<int:user_id>', methods=['GET'])
-def get_user(user_id):
-    """Get user information"""
-    try:
-        user = User.query.get(user_id)
+@auth_ns.route('/login')
+class Login(Resource):
+    @api.doc('login')
+    @api.expect(login_model)
+    def post(self):
+        """Authenticate user and return token"""
+        try:
+            data = request.json
 
-        if not user:
-            return jsonify({'success': False, 'message': 'User not found'}), 404
+            # Find user
+            user = User.query.filter_by(email=data['email']).first()
 
-        return jsonify({'success': True, 'user': user.to_dict()}), 200
+            if not user or not user.check_password(data['password']):
+                return {'success': False, 'message': 'Invalid credentials'}, 401
 
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
+            # Generate token
+            token = secrets.token_hex(16)
 
-
-# 5. CREATE TRADE
-@app.route('/api/trades', methods=['POST'])
-def create_trade():
-    """Create a new trade record"""
-    try:
-        data = request.json
-
-        trade = Trade(
-            user_id=data['user_id'],
-            symbol=data['symbol'],
-            entry_price=data['entry_price'],
-            quantity=data['quantity'],
-            strategy=data['strategy']
-        )
-
-        db.session.add(trade)
-        db.session.commit()
-
-        return jsonify({'success': True, 'trade': trade.to_dict()}), 201
-
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-
-# 6. GET USER'S TRADES
-@app.route('/api/user/<int:user_id>/trades', methods=['GET'])
-def get_user_trades(user_id):
-    """Get all trades for a user"""
-    try:
-        trades = Trade.query.filter_by(user_id=user_id).all()
-
-        return jsonify({
-            'success': True,
-            'trades': [trade.to_dict() for trade in trades]
-        }), 200
-
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-
-# 7. UPDATE TRADE
-@app.route('/api/trades/<int:trade_id>', methods=['PUT'])
-def update_trade(trade_id):
-    """Update a trade (close it, set exit price)"""
-    try:
-        data = request.json
-        trade = Trade.query.get(trade_id)
-
-        if not trade:
-            return jsonify({'success': False, 'message': 'Trade not found'}), 404
-
-        if 'exit_price' in data:
-            trade.exit_price = data['exit_price']
-            trade.exit_time = datetime.utcnow()
-            trade.profit_loss = (data['exit_price'] - trade.entry_price) * trade.quantity
-            trade.status = 'closed'
-
-        db.session.commit()
-
-        return jsonify({'success': True, 'trade': trade.to_dict()}), 200
-
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-
-# 8. GET USER STATISTICS
-@app.route('/api/user/<int:user_id>/stats', methods=['GET'])
-def get_stats(user_id):
-    """Calculate trading statistics for user"""
-    try:
-        trades = Trade.query.filter_by(user_id=user_id, status='closed').all()
-
-        if not trades:
-            return jsonify({
+            return {
                 'success': True,
-                'total_trades': 0,
-                'total_profit': 0,
-                'win_rate': 0,
-                'avg_profit': 0
-            }), 200
+                'token': token,
+                'user': user.to_dict()
+            }, 200
 
-        total_trades = len(trades)
-        total_profit = sum(t.profit_loss for t in trades)
-        winning_trades = len([t for t in trades if t.profit_loss > 0])
-        win_rate = (winning_trades / total_trades * 100) if total_trades > 0 else 0
-        avg_profit = total_profit / total_trades if total_trades > 0 else 0
+        except Exception as e:
+            return {'success': False, 'message': str(e)}, 500
 
-        return jsonify({
-            'success': True,
-            'total_trades': total_trades,
-            'total_profit': total_profit,
-            'win_rate': round(win_rate, 2),
-            'avg_profit': round(avg_profit, 2),
-            'winning_trades': winning_trades
-        }), 200
+# ==================== USER MANAGEMENT ====================
 
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
+@user_ns.route('/<int:user_id>')
+class GetUser(Resource):
+    @api.doc('get_user')
+    def get(self, user_id):
+        """Get user information"""
+        try:
+            user = User.query.get(user_id)
 
+            if not user:
+                return {'success': False, 'message': 'User not found'}, 404
 
-# 9. SCAN STOCKS FOR SIGNALS
-@app.route('/api/scan', methods=['POST'])
-def scan_stocks():
-    """Scan stocks for trading signals"""
-    try:
-        data = request.json
-        symbols = data.get('symbols', ['RELIANCE', 'TCS', 'INFY', 'HDFC'])
-        strategy = data.get('strategy', 'ema_crossover')
+            return {'success': True, 'user': user.to_dict()}, 200
 
-        results = screener.scan_portfolio(symbols, strategy)
-
-        return jsonify({
-            'success': True,
-            'results': results,
-            'timestamp': datetime.utcnow().isoformat()
-        }), 200
-
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
+        except Exception as e:
+            return {'success': False, 'message': str(e)}, 500
 
 
-# 10. GET SIGNAL FOR SINGLE STOCK
-@app.route('/api/scan/<symbol>', methods=['GET'])
-def scan_single_stock(symbol):
-    """Get signal for single stock"""
-    try:
-        strategy = request.args.get('strategy', 'ema_crossover')
+@user_ns.route('/<int:user_id>/stats')
+class UserStats(Resource):
+    @api.doc('get_user_stats')
+    def get(self, user_id):
+        """Get trading statistics for user"""
+        try:
+            trades = Trade.query.filter_by(user_id=user_id, status='closed').all()
 
-        if strategy == 'ema_crossover':
-            result = screener.ema_crossover_signal(symbol)
-        elif strategy == 'rsi':
-            result = screener.rsi_signal(symbol)
-        else:
-            result = {'symbol': symbol, 'signal': 'UNKNOWN'}
+            if not trades:
+                return {
+                    'success': True,
+                    'total_trades': 0,
+                    'total_profit': 0,
+                    'win_rate': 0,
+                    'avg_profit': 0
+                }, 200
 
-        return jsonify({'success': True, 'data': result}), 200
+            total_trades = len(trades)
+            total_profit = sum(t.profit_loss for t in trades)
+            winning_trades = len([t for t in trades if t.profit_loss > 0])
+            win_rate = (winning_trades / total_trades * 100) if total_trades > 0 else 0
+            avg_profit = total_profit / total_trades if total_trades > 0 else 0
 
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
+            return {
+                'success': True,
+                'total_trades': total_trades,
+                'total_profit': total_profit,
+                'win_rate': round(win_rate, 2),
+                'avg_profit': round(avg_profit, 2),
+                'winning_trades': winning_trades
+            }, 200
 
+        except Exception as e:
+            return {'success': False, 'message': str(e)}, 500
+
+# ==================== TRADES ====================
+
+@trade_ns.route('')
+class TradeList(Resource):
+    @api.doc('create_trade')
+    @api.expect(trade_input_model)
+    def post(self):
+        """Create a new trade record"""
+        try:
+            data = request.json
+
+            trade = Trade(
+                user_id=data['user_id'],
+                symbol=data['symbol'],
+                entry_price=data['entry_price'],
+                quantity=data['quantity'],
+                strategy=data['strategy']
+            )
+
+            db.session.add(trade)
+            db.session.commit()
+
+            return {'success': True, 'trade': trade.to_dict()}, 201
+
+        except Exception as e:
+            db.session.rollback()
+            return {'success': False, 'message': str(e)}, 500
+
+
+@user_ns.route('/<int:user_id>/trades')
+class UserTrades(Resource):
+    @api.doc('get_user_trades')
+    def get(self, user_id):
+        """Get all trades for a user"""
+        try:
+            trades = Trade.query.filter_by(user_id=user_id).all()
+
+            return {
+                'success': True,
+                'trades': [trade.to_dict() for trade in trades]
+            }, 200
+
+        except Exception as e:
+            return {'success': False, 'message': str(e)}, 500
+
+
+@trade_ns.route('/<int:trade_id>')
+class TradeDetail(Resource):
+    @api.doc('update_trade')
+    def put(self, trade_id):
+        """Update a trade (close it, set exit price)"""
+        try:
+            data = request.json
+            trade = Trade.query.get(trade_id)
+
+            if not trade:
+                return {'success': False, 'message': 'Trade not found'}, 404
+
+            if 'exit_price' in data:
+                trade.exit_price = data['exit_price']
+                trade.exit_time = datetime.utcnow()
+                trade.profit_loss = (data['exit_price'] - trade.entry_price) * trade.quantity
+                trade.status = 'closed'
+
+            db.session.commit()
+
+            return {'success': True, 'trade': trade.to_dict()}, 200
+
+        except Exception as e:
+            db.session.rollback()
+            return {'success': False, 'message': str(e)}, 500
+
+# ==================== SCREENER (COMMENTED OUT) ====================
+# Uncomment these when screener is working
+
+@scan_ns.route('')
+class ScanStocks(Resource):
+    @api.doc('scan_stocks')
+    def post(self):
+        """Scan stocks for trading signals"""
+        try:
+            data = request.json
+            symbols = data.get('symbols', ['RELIANCE', 'TCS', 'INFY', 'HDFC'])
+            strategy = data.get('strategy', 'ema_crossover')
+
+            results = screener.scan_portfolio(symbols, strategy)
+
+            return {
+                'success': True,
+                'results': results,
+                'timestamp': datetime.utcnow().isoformat()
+            }, 200
+
+        except Exception as e:
+            return {'success': False, 'message': str(e)}, 500
+
+
+@scan_ns.route('/<symbol>')
+class ScanSingle(Resource):
+    @api.doc('scan_single_stock')
+    def get(self, symbol):
+        """Get signal for single stock"""
+        try:
+            strategy = request.args.get('strategy', 'ema_crossover')
+
+            if strategy == 'ema_crossover':
+                result = screener.ema_crossover_signal(symbol)
+            elif strategy == 'rsi':
+                result = screener.rsi_signal(symbol)
+            else:
+                result = {'symbol': symbol, 'signal': 'UNKNOWN'}
+
+            return {'success': True, 'data': result}, 200
+
+        except Exception as e:
+            return {'success': False, 'message': str(e)}, 500
 
 # ==================== ERROR HANDLERS ====================
 
 @app.errorhandler(404)
 def not_found(error):
-    return jsonify({'success': False, 'message': 'Not found'}), 404
+    return {'success': False, 'message': 'Endpoint not found'}, 404
 
 
 @app.errorhandler(500)
 def server_error(error):
-    return jsonify({'success': False, 'message': 'Server error'}), 500
+    return {'success': False, 'message': 'Server error'}, 500
 
 
 # ==================== RUN APPLICATION ====================

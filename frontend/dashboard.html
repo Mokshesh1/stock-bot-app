@@ -1,446 +1,600 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard - StockBot</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-  />
+<title>Dashboard - StockBot</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link
+href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+rel="stylesheet"
+/>
 
-  <style>
-    body {
-      background-color: #f8f9fa;
-    }
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    .stat-card {
-      border: none;
-      border-radius: 14px;
-      box-shadow: 0 2px 12px rgba(0,0,0,.06);
-    }
+<style>
+body{
+background:#f8f9fa;
+}
 
-    .welcome-card {
-      border: none;
-      border-radius: 16px;
-      background: linear-gradient(135deg, #0d6efd, #3b82f6);
-      color: white;
-      box-shadow: 0 4px 20px rgba(13,110,253,.18);
-    }
+.card{
+border:none;
+border-radius:14px;
+box-shadow:0 2px 12px rgba(0,0,0,.06);
+}
 
-    .empty-state {
-      text-align: center;
-      padding: 48px 24px;
-      color: #6c757d;
-    }
+.empty-state{
+padding:24px;
+text-align:center;
+color:#6c757d;
+}
 
-    .table-card,
-    .chart-card {
-      border: none;
-      border-radius: 14px;
-      box-shadow: 0 2px 12px rgba(0,0,0,.06);
-    }
+.welcome-card{
+background:linear-gradient(135deg,#0d6efd,#2563eb);
+color:white;
+}
+</style>
 
-    .navbar-brand {
-      font-weight: 600;
-    }
-  </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-  <div class="container">
+<nav class="navbar navbar-dark bg-dark">
 
-    <a class="navbar-brand" href="#">
-      📈 StockBot
-    </a>
+<div class="container">
 
-    <button
-      class="navbar-toggler"
-      type="button"
-      data-bs-toggle="collapse"
-      data-bs-target="#navbarNav"
-    >
-      <span class="navbar-toggler-icon"></span>
-    </button>
+<a class="navbar-brand">
+📈 StockBot
+</a>
 
-    <div class="collapse navbar-collapse" id="navbarNav">
+<div>
 
-      <ul class="navbar-nav ms-auto align-items-center">
+<a href="screener.html" class="btn btn-success btn-sm me-2">
+Run Scan
+</a>
 
-        <li class="nav-item me-2">
-          <a class="nav-link active" href="#">
-            Dashboard
-          </a>
-        </li>
+<a href="paper-trade.html" class="btn btn-primary btn-sm me-2">
+Paper Trade
+</a>
 
-        <li class="nav-item me-2">
-          <a class="nav-link" href="/screener.html">
-            Screener
-          </a>
-        </li>
+<button
+onclick="logout()"
+class="btn btn-outline-light btn-sm"
+>
+Logout
+</button>
 
-        <li class="nav-item me-3">
-          <a class="nav-link" href="/strategies.html">
-            Strategies
-          </a>
-        </li>
+</div>
 
-        <li class="nav-item me-3">
-          <a
-            href="/screener.html"
-            class="btn btn-success btn-sm"
-          >
-            Run Scan
-          </a>
-        </li>
+</div>
 
-        <li class="nav-item">
-          <a
-            class="nav-link"
-            href="#"
-            onclick="logout()"
-          >
-            Logout
-          </a>
-        </li>
-
-      </ul>
-    </div>
-  </div>
 </nav>
 
 <div class="container mt-4">
 
-  <!-- Welcome Banner -->
-  <div
-    id="welcomeBanner"
-    class="card welcome-card mb-4 d-none"
-  >
-    <div class="card-body p-4">
+<div
+id="welcomeBanner"
+class="card welcome-card mb-4 d-none"
+>
 
-      <h3>
-        Welcome to StockBot 👋
-      </h3>
+<div class="card-body">
 
-      <p class="mb-4">
-        Start by scanning NSE stocks and place your first paper trade using ₹10,00,000 virtual capital.
-      </p>
+<h3>
+Welcome 👋
+</h3>
 
-      <a
-        href="/screener.html"
-        class="btn btn-light me-2"
-      >
-        Scan Stocks
-      </a>
+<p>
+Run a stock scan and place your first paper trade.
+</p>
 
-      <a
-        href="/paper-trade.html"
-        class="btn btn-outline-light"
-      >
-        Start Paper Trading
-      </a>
+</div>
 
-    </div>
-  </div>
+</div>
 
-  <!-- Stats -->
-  <div class="row">
+<div class="row">
 
-    <div class="col-md-3 mb-4">
-      <div class="card stat-card">
-        <div class="card-body">
-          <h6 class="text-muted">
-            Portfolio Value
-          </h6>
-          <h3 id="portfolioValue">
-            ₹10,00,000
-          </h3>
-        </div>
-      </div>
-    </div>
+<div class="col-md-3 mb-4">
+<div class="card">
+<div class="card-body">
+<h6>Portfolio Value</h6>
+<h3 id="portfolioValue">₹10,00,000</h3>
+</div>
+</div>
+</div>
 
-    <div class="col-md-3 mb-4">
-      <div class="card stat-card">
-        <div class="card-body">
-          <h6 class="text-muted">
-            Total Profit
-          </h6>
-          <h3
-            id="totalProfit"
-            class="text-success"
-          >
-            ₹0
-          </h3>
-        </div>
-      </div>
-    </div>
+<div class="col-md-3 mb-4">
+<div class="card">
+<div class="card-body">
+<h6>Total Profit</h6>
+<h3 id="totalProfit">₹0</h3>
+</div>
+</div>
+</div>
 
-    <div class="col-md-3 mb-4">
-      <div class="card stat-card">
-        <div class="card-body">
-          <h6 class="text-muted">
-            Total Trades
-          </h6>
-          <h3 id="totalTrades">
-            0
-          </h3>
-        </div>
-      </div>
-    </div>
+<div class="col-md-3 mb-4">
+<div class="card">
+<div class="card-body">
+<h6>Total Trades</h6>
+<h3 id="totalTrades">0</h3>
+</div>
+</div>
+</div>
 
-    <div class="col-md-3 mb-4">
-      <div class="card stat-card">
-        <div class="card-body">
-          <h6 class="text-muted">
-            Win Rate
-          </h6>
-          <h3 id="winRate">
-            —
-          </h3>
-        </div>
-      </div>
-    </div>
+<div class="col-md-3 mb-4">
+<div class="card">
+<div class="card-body">
+<h6>Win Rate</h6>
+<h3 id="winRate">—</h3>
+</div>
+</div>
+</div>
 
-  </div>
+</div>
 
-  <!-- Charts -->
-  <div
-    id="chartsSection"
-    class="row mt-2 d-none"
-  >
+<div
+id="chartsSection"
+class="row d-none"
+>
 
-    <div class="col-md-6 mb-4">
-      <div class="card chart-card">
-        <div class="card-body">
-          <h5>
-            Profit Trend
-          </h5>
-          <canvas id="profitChart"></canvas>
-        </div>
-      </div>
-    </div>
+<div class="col-md-6 mb-4">
 
-    <div class="col-md-6 mb-4">
-      <div class="card chart-card">
-        <div class="card-body">
-          <h5>
-            Win / Loss Distribution
-          </h5>
-          <canvas id="winLossChart"></canvas>
-        </div>
-      </div>
-    </div>
+<div class="card">
+<div class="card-body">
+<canvas id="profitChart"></canvas>
+</div>
+</div>
 
-  </div>
+</div>
 
-  <!-- Recent Trades -->
-  <div class="row mt-3">
+<div class="col-md-6 mb-4">
 
-    <div class="col-12">
+<div class="card">
+<div class="card-body">
+<canvas id="winLossChart"></canvas>
+</div>
+</div>
 
-      <div class="card table-card">
+</div>
 
-        <div class="card-body">
+</div>
 
-          <h5 class="mb-4">
-            Recent Trades
-          </h5>
+<div class="row">
 
-          <div id="emptyTrades" class="empty-state">
+<div class="col-md-6">
 
-            <h5>
-              No trades yet
-            </h5>
+<div class="card">
 
-            <p>
-              Run your first scan and place a paper trade to start tracking performance.
-            </p>
+<div class="card-body">
 
-            <a
-              href="/paper-trade.html"
-              class="btn btn-primary"
-            >
-              Place First Trade
-            </a>
+<h5>
+Open Positions
+</h5>
 
-          </div>
+<div
+id="emptyOpenTrades"
+class="empty-state"
+>
+No open positions
+</div>
 
-          <div
-            id="tradesTableWrapper"
-            class="d-none"
-          >
+<div
+id="openTradesWrapper"
+class="d-none"
+>
 
-            <table class="table table-striped">
+<table class="table">
 
-              <thead>
-                <tr>
-                  <th>Symbol</th>
-                  <th>Entry</th>
-                  <th>Exit</th>
-                  <th>P&L</th>
-                  <th>Return %</th>
-                </tr>
-              </thead>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Entry</th>
+<th>Qty</th>
+<th>Action</th>
+</tr>
+</thead>
 
-              <tbody id="tradesTableBody"></tbody>
+<tbody id="openTradesTableBody"></tbody>
 
-            </table>
+</table>
 
-          </div>
+</div>
 
-        </div>
+</div>
 
-      </div>
+</div>
 
-    </div>
+</div>
 
-  </div>
+<div class="col-md-6">
+
+<div class="card">
+
+<div class="card-body">
+
+<h5>
+Closed Trades
+</h5>
+
+<div
+id="emptyClosedTrades"
+class="empty-state"
+>
+No closed trades
+</div>
+
+<div
+id="closedTradesWrapper"
+class="d-none"
+>
+
+<table class="table">
+
+<thead>
+<tr>
+<th>Symbol</th>
+<th>P&L</th>
+<th>Status</th>
+</tr>
+</thead>
+
+<tbody id="closedTradesTableBody"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div
+class="modal fade"
+id="closeTradeModal"
+tabindex="-1"
+>
+
+<div class="modal-dialog">
+
+<div class="modal-content">
+
+<div class="modal-header">
+<h5>Close Position</h5>
+</div>
+
+<div class="modal-body">
+
+<p id="closeTradeSymbol"></p>
+
+<input
+id="exitPriceInput"
+type="number"
+class="form-control"
+placeholder="Exit price"
+/>
+
+<input
+id="closeTradeId"
+type="hidden"
+/>
+
+</div>
+
+<div class="modal-footer">
+
+<button
+class="btn btn-secondary"
+data-bs-dismiss="modal"
+>
+Cancel
+</button>
+
+<button
+class="btn btn-danger"
+onclick="closeTrade()"
+>
+Close Position
+</button>
+
+</div>
+
+</div>
+
+</div>
 
 </div>
 
 <script>
 
+const API_URL =
+'https://stock-bot-app-production.up.railway.app';
+
 let profitChart;
 let winLossChart;
 
-async function loadDashboard() {
+async function loadDashboard(){
 
-  /*
-    Replace with real API later:
-    const response = await fetch('/api/user/1/stats')
-    const data = await response.json()
-  */
+const user =
+JSON.parse(
+localStorage.getItem('user')
+);
 
-  const data = {
-    portfolio_value: 1000000,
-    total_profit: 0,
-    total_trades: 0,
-    win_rate: null,
-    trades: []
-  };
+if(!user){
 
-  renderDashboard(data);
-}
+window.location.href =
+'login.html';
 
-function renderDashboard(data) {
-
-  document.getElementById('portfolioValue').textContent =
-    `₹${data.portfolio_value.toLocaleString('en-IN')}`;
-
-  document.getElementById('totalProfit').textContent =
-    `₹${data.total_profit.toLocaleString('en-IN')}`;
-
-  document.getElementById('totalTrades').textContent =
-    data.total_trades;
-
-  document.getElementById('winRate').textContent =
-    data.win_rate ? `${data.win_rate}%` : '—';
-
-  if (data.total_trades === 0) {
-
-    document
-      .getElementById('welcomeBanner')
-      .classList.remove('d-none');
-
-    document
-      .getElementById('emptyTrades')
-      .classList.remove('d-none');
-
-    document
-      .getElementById('chartsSection')
-      .classList.add('d-none');
-
-  } else {
-
-    document
-      .getElementById('welcomeBanner')
-      .classList.add('d-none');
-
-    document
-      .getElementById('emptyTrades')
-      .classList.add('d-none');
-
-    document
-      .getElementById('chartsSection')
-      .classList.remove('d-none');
-
-    document
-      .getElementById('tradesTableWrapper')
-      .classList.remove('d-none');
-
-    renderTrades(data.trades);
-    renderCharts(data);
-
-  }
+return;
 
 }
 
-function renderTrades(trades) {
+const userId = user.id;
 
-  const tbody =
-    document.getElementById('tradesTableBody');
+const stats =
+await fetch(
+`${API_URL}/api/user/${userId}/stats`
+);
 
-  tbody.innerHTML = '';
+const statsData =
+await stats.json();
 
-  trades.forEach(trade => {
+const trades =
+await fetch(
+`${API_URL}/api/user/${userId}/trades`
+);
 
-    tbody.innerHTML += `
-      <tr>
-        <td>${trade.symbol}</td>
-        <td>₹${trade.entry_price}</td>
-        <td>₹${trade.exit_price}</td>
-        <td>${trade.pnl}</td>
-        <td>${trade.return_pct}%</td>
-      </tr>
-    `;
+const tradesData =
+await trades.json();
 
-  });
+const tradeList =
+tradesData.trades || [];
 
-}
+document.getElementById('portfolioValue').textContent =
+`₹${(1000000 + (statsData.total_profit || 0)).toLocaleString('en-IN')}`;
 
-function renderCharts(data) {
+document.getElementById('totalProfit').textContent =
+`₹${statsData.total_profit || 0}`;
 
-  const ctx1 =
-    document.getElementById('profitChart');
+document.getElementById('totalTrades').textContent =
+statsData.total_trades || 0;
 
-  const ctx2 =
-    document.getElementById('winLossChart');
+document.getElementById('winRate').textContent =
+statsData.total_trades > 0
+? `${statsData.win_rate}%`
+: '—';
 
-  if (profitChart) profitChart.destroy();
-  if (winLossChart) winLossChart.destroy();
+if(!tradeList.length){
 
-  profitChart = new Chart(ctx1, {
-    type: 'line',
-    data: {
-      labels: ['Week 1','Week 2','Week 3','Week 4'],
-      datasets: [{
-        label: 'Profit',
-        data: [0,500,1200,2500],
-        tension: 0.4
-      }]
-    }
-  });
+document.getElementById(
+'welcomeBanner'
+).classList.remove('d-none');
 
-  winLossChart = new Chart(ctx2, {
-    type: 'doughnut',
-    data: {
-      labels: ['Wins','Losses'],
-      datasets: [{
-        data: [68,32]
-      }]
-    }
-  });
+}else{
+
+renderTrades(tradeList);
+renderCharts(tradeList);
+
+document.getElementById(
+'chartsSection'
+).classList.remove('d-none');
 
 }
 
-function logout() {
+}
 
-  localStorage.removeItem('token');
-  window.location.href = 'index.html';
+function renderTrades(trades){
+
+const open =
+trades.filter(
+t => t.status === 'open'
+);
+
+const closed =
+trades.filter(
+t => t.status === 'closed'
+);
+
+const openBody =
+document.getElementById(
+'openTradesTableBody'
+);
+
+const closedBody =
+document.getElementById(
+'closedTradesTableBody'
+);
+
+openBody.innerHTML='';
+closedBody.innerHTML='';
+
+if(open.length){
+
+document.getElementById(
+'emptyOpenTrades'
+).classList.add('d-none');
+
+document.getElementById(
+'openTradesWrapper'
+).classList.remove('d-none');
+
+open.forEach(trade=>{
+
+openBody.innerHTML += `
+
+<tr>
+<td>${trade.symbol}</td>
+<td>₹${trade.entry_price}</td>
+<td>${trade.quantity}</td>
+<td>
+
+<button
+class="btn btn-danger btn-sm"
+onclick="openCloseTradeModal(
+${trade.id},
+'${trade.symbol}'
+)"
+>
+Close
+</button>
+
+</td>
+</tr>
+
+`;
+
+});
+
+}
+
+if(closed.length){
+
+document.getElementById(
+'emptyClosedTrades'
+).classList.add('d-none');
+
+document.getElementById(
+'closedTradesWrapper'
+).classList.remove('d-none');
+
+closed.forEach(trade=>{
+
+closedBody.innerHTML += `
+
+<tr>
+<td>${trade.symbol}</td>
+<td>₹${trade.profit_loss}</td>
+<td>Closed</td>
+</tr>
+
+`;
+
+});
+
+}
+
+}
+
+function renderCharts(trades){
+
+const closed =
+trades.filter(
+t=>t.status==='closed'
+);
+
+let running=0;
+
+const pnl =
+closed.map(t=>{
+running += t.profit_loss || 0;
+return running;
+});
+
+if(profitChart) profitChart.destroy();
+if(winLossChart) winLossChart.destroy();
+
+profitChart =
+new Chart(
+document.getElementById('profitChart'),
+{
+type:'line',
+data:{
+labels:closed.map((_,i)=>`Trade ${i+1}`),
+datasets:[{
+label:'Profit',
+data:pnl
+}]
+}
+}
+);
+
+const wins =
+closed.filter(
+t=>t.profit_loss > 0
+).length;
+
+const losses =
+closed.length - wins;
+
+winLossChart =
+new Chart(
+document.getElementById('winLossChart'),
+{
+type:'doughnut',
+data:{
+labels:['Wins','Losses'],
+datasets:[{
+data:[wins,losses]
+}]
+}
+}
+);
+
+}
+
+function openCloseTradeModal(id,symbol){
+
+document.getElementById(
+'closeTradeId'
+).value=id;
+
+document.getElementById(
+'closeTradeSymbol'
+).textContent=
+`Close ${symbol}`;
+
+new bootstrap.Modal(
+document.getElementById(
+'closeTradeModal'
+)
+).show();
+
+}
+
+async function closeTrade(){
+
+const tradeId =
+document.getElementById(
+'closeTradeId'
+).value;
+
+const exitPrice =
+parseFloat(
+document.getElementById(
+'exitPriceInput'
+).value
+);
+
+await fetch(
+`${API_URL}/api/trades/${tradeId}`,
+{
+method:'PUT',
+
+headers:{
+'Content-Type':
+'application/json'
+},
+
+body:JSON.stringify({
+exit_price:exitPrice
+})
+
+}
+);
+
+location.reload();
+
+}
+
+function logout(){
+
+localStorage.clear();
+
+window.location.href='login.html';
 
 }
 
@@ -448,9 +602,7 @@ loadDashboard();
 
 </script>
 
-<script
-  src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
-</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
 </html>

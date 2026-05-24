@@ -6,6 +6,7 @@ db = SQLAlchemy()
 
 
 class User(db.Model):
+
     __tablename__ = 'users'
 
     id = db.Column(
@@ -56,12 +57,20 @@ class User(db.Model):
         lazy=True
     )
 
+    alerts = db.relationship(
+        'Alert',
+        backref='user',
+        lazy=True
+    )
+
     def set_password(self, password):
+
         self.password_hash = hashlib.sha256(
             password.encode()
         ).hexdigest()
 
     def check_password(self, password):
+
         return self.password_hash == hashlib.sha256(
             password.encode()
         ).hexdigest()
@@ -69,13 +78,19 @@ class User(db.Model):
     def to_dict(self):
 
         return {
+
             'id': self.id,
+
             'name': self.name,
+
             'email': self.email,
+
             'subscription_tier':
                 self.subscription_tier,
+
             'created_at':
                 self.created_at.isoformat()
+
         }
 
 
@@ -90,7 +105,9 @@ class Trade(db.Model):
 
     user_id = db.Column(
         db.Integer,
-        db.ForeignKey('users.id'),
+        db.ForeignKey(
+            'users.id'
+        ),
         nullable=False
     )
 
@@ -143,16 +160,33 @@ class Trade(db.Model):
 
         return {
 
-            'id': self.id,
-            'symbol': self.symbol,
-            'entry_price': self.entry_price,
-            'exit_price': self.exit_price,
-            'quantity': self.quantity,
-            'profit_loss': self.profit_loss,
-            'strategy': self.strategy,
-            'status': self.status,
+            'id':
+                self.id,
+
+            'symbol':
+                self.symbol,
+
+            'entry_price':
+                self.entry_price,
+
+            'exit_price':
+                self.exit_price,
+
+            'quantity':
+                self.quantity,
+
+            'profit_loss':
+                self.profit_loss,
+
+            'strategy':
+                self.strategy,
+
+            'status':
+                self.status,
+
             'entry_time':
                 self.entry_time.isoformat()
+
         }
 
 
@@ -167,7 +201,9 @@ class Watchlist(db.Model):
 
     user_id = db.Column(
         db.Integer,
-        db.ForeignKey('users.id'),
+        db.ForeignKey(
+            'users.id'
+        ),
         nullable=False
     )
 
@@ -184,7 +220,97 @@ class Watchlist(db.Model):
     def to_dict(self):
 
         return {
-            'id': self.id,
-            'user_id': self.user_id,
-            'symbol': self.symbol
+
+            'id':
+                self.id,
+
+            'user_id':
+                self.user_id,
+
+            'symbol':
+                self.symbol,
+
+            'created_at':
+                self.created_at.isoformat()
+
+        }
+
+
+class Alert(db.Model):
+
+    __tablename__ = 'alerts'
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey(
+            'users.id'
+        ),
+        nullable=False
+    )
+
+    symbol = db.Column(
+        db.String(20),
+        nullable=False
+    )
+
+    alert_type = db.Column(
+        db.String(50),
+        nullable=False
+    )
+
+    target_value = db.Column(
+        db.Float,
+        nullable=True
+    )
+
+    is_triggered = db.Column(
+        db.Boolean,
+        default=False
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
+
+    triggered_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+    def to_dict(self):
+
+        return {
+
+            'id':
+                self.id,
+
+            'user_id':
+                self.user_id,
+
+            'symbol':
+                self.symbol,
+
+            'alert_type':
+                self.alert_type,
+
+            'target_value':
+                self.target_value,
+
+            'is_triggered':
+                self.is_triggered,
+
+            'created_at':
+                self.created_at.isoformat(),
+
+            'triggered_at':
+                self.triggered_at.isoformat()
+                if self.triggered_at
+                else None
+
         }

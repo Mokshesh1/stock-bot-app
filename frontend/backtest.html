@@ -67,6 +67,7 @@ margin-bottom:20px;
 
 <div class="container">
 
+<div class="topbar">
 <button
 class="back-btn"
 onclick="window.location.href='dashboard.html'"
@@ -74,7 +75,10 @@ onclick="window.location.href='dashboard.html'"
 ← Dashboard
 </button>
 
-<div class="card">
+<div>
+Dashboard / Backtest Strategy
+</div>
+</div>
 
 <h1>
 Strategy Backtesting
@@ -150,7 +154,7 @@ document.getElementById(
 const response =
 await fetch(
 
-`${API_URL}/api/backtest`,
+`https://stock-bot-app-production.up.railway.app/api/backtest`,
 
 {
 method:'POST',

@@ -1,47 +1,189 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Screener</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<meta charset="UTF-8">
+
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1"
+/>
+
+<title>Stock Screener - StockBot</title>
+
+<link
+href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+rel="stylesheet"
+/>
+
+<style>
+
+body{
+background:#f8f9fa;
+}
+
+.card{
+border:none;
+border-radius:14px;
+box-shadow:0 2px 12px rgba(0,0,0,.06);
+}
+
+.strategy-help{
+font-size:14px;
+color:#6c757d;
+}
+
+.signal-buy{
+color:#198754;
+font-weight:600;
+}
+
+.signal-sell{
+color:#dc3545;
+font-weight:600;
+}
+
+.back-link{
+text-decoration:none;
+font-weight:500;
+}
+
+</style>
+
 </head>
+
 <body>
 
-<div class="container mt-5">
+<div class="container py-4">
 
-<h2>
+<div class="mb-3">
+
+<a
+href="dashboard.html"
+class="back-link"
+>
+← Back to Dashboard
+</a>
+
+</div>
+
+<nav
+aria-label="breadcrumb"
+class="mb-4"
+>
+
+<ol class="breadcrumb">
+
+<li class="breadcrumb-item">
+
+<a href="dashboard.html">
+Dashboard
+</a>
+
+</li>
+
+<li
+class="breadcrumb-item active"
+aria-current="page"
+>
+Screener
+</li>
+
+</ol>
+
+</nav>
+
+<div class="row justify-content-center">
+
+<div class="col-lg-10">
+
+<h2 class="mb-2">
 📈 Stock Screener
 </h2>
 
+<p class="text-muted mb-4">
+Scan NSE stocks for trade opportunities
+</p>
+
+<div class="card mb-4">
+
+<div class="card-body">
+
 <form id="scanForm">
 
-<input
+<label class="form-label">
+Symbols
+</label>
+
+<textarea
 id="symbols"
 class="form-control mb-3"
-value="RELIANCE,TCS,INFY"
-/>
+rows="3"
+>RELIANCE,TCS,INFY,HDFCBANK,ICICIBANK</textarea>
+
+<label class="form-label">
+Strategy
+</label>
 
 <select
 id="strategy"
-class="form-select mb-3"
+class="form-select mb-2"
 >
+
 <option value="ema_crossover">
-EMA
+EMA Crossover
 </option>
+
 <option value="rsi">
 RSI
 </option>
+
 </select>
 
-<button class="btn btn-primary">
+<div
+id="strategyHelp"
+class="strategy-help mb-3"
+>
+Bullish crossover between short and long moving averages
+</div>
+
+<button
+class="btn btn-primary w-100"
+type="submit"
+>
 Run Scan
 </button>
 
 </form>
 
+</div>
+
+</div>
+
+<div
+id="loadingState"
+class="text-center d-none"
+>
+
+<div
+class="spinner-border"
+role="status"
+></div>
+
+<p class="mt-3">
+Scanning stocks...
+</p>
+
+</div>
+
 <div
 id="results"
-class="row mt-4"
+class="row"
 ></div>
+
+</div>
+
+</div>
 
 </div>
 
@@ -49,6 +191,34 @@ class="row mt-4"
 
 const API_URL =
 'https://stock-bot-app-production.up.railway.app';
+
+const strategyDescriptions = {
+
+ema_crossover:
+'Bullish crossover between short and long moving averages.',
+
+rsi:
+'Momentum signal based on overbought and oversold RSI levels.'
+
+};
+
+document
+.getElementById(
+'strategy'
+)
+.addEventListener(
+'change',
+function(){
+
+document.getElementById(
+'strategyHelp'
+).textContent =
+strategyDescriptions[
+this.value
+];
+
+}
+);
 
 document
 .getElementById(
@@ -60,15 +230,37 @@ async function(e){
 
 e.preventDefault();
 
+document
+.getElementById(
+'results'
+).innerHTML='';
+
+document
+.getElementById(
+'loadingState'
+).classList.remove(
+'d-none'
+);
+
 const symbols =
-document.getElementById(
+document
+.getElementById(
 'symbols'
-).value.split(',');
+)
+.value
+.split(',')
+.map(
+s=>s.trim()
+);
 
 const strategy =
-document.getElementById(
+document
+.getElementById(
 'strategy'
-).value;
+)
+.value;
+
+try{
 
 const response =
 await fetch(
@@ -85,6 +277,7 @@ body:JSON.stringify({
 symbols,
 strategy
 })
+
 }
 );
 
@@ -92,8 +285,19 @@ const data =
 await response.json();
 
 renderResults(
-data.results
+data.results || []
 );
+
+}finally{
+
+document
+.getElementById(
+'loadingState'
+).classList.add(
+'d-none'
+);
+
+}
 
 }
 );
@@ -107,28 +311,74 @@ document.getElementById(
 
 container.innerHTML='';
 
+if(!results.length){
+
+container.innerHTML=`
+
+<div class="col-12">
+
+<div class="alert alert-light">
+
+No signals found.
+
+</div>
+
+</div>
+
+`;
+
+return;
+
+}
+
 results.forEach(result=>{
 
 container.innerHTML += `
 
-<div class="col-md-4 mb-4">
+<div class="col-md-6 col-lg-4 mb-4">
 
-<div class="card">
+<div class="card h-100">
 
-<div class="card-body">
+<div class="card-body d-flex flex-column">
 
-<h5>${result.symbol}</h5>
+<h5>
+${result.symbol}
+</h5>
 
-<p>
+<p class="${
+result.signal === 'BUY'
+? 'signal-buy'
+: 'signal-sell'
+}">
 ${result.signal}
 </p>
 
-<a
-href="paper-trade.html"
-class="btn btn-success"
+<p class="text-muted mb-4">
+Strategy:
+${result.strategy || ''}
+</p>
+
+<div class="mt-auto d-flex gap-2">
+
+<button
+class="btn btn-outline-dark btn-sm"
+onclick="addToWatchlist(
+'${result.symbol}'
+)"
 >
-Trade Now
-</a>
+⭐ Watchlist
+</button>
+
+<button
+class="btn btn-success btn-sm"
+onclick="tradeNow(
+'${result.symbol}'
+)"
+>
+Trade
+</button>
+
+</div>
 
 </div>
 
@@ -139,6 +389,47 @@ Trade Now
 `;
 
 });
+
+}
+
+async function addToWatchlist(symbol){
+
+const user =
+JSON.parse(
+localStorage.getItem(
+'user'
+)
+);
+
+if(!user)return;
+
+await fetch(
+`${API_URL}/api/user/${user.id}/watchlist`,
+{
+method:'POST',
+
+headers:{
+'Content-Type':
+'application/json'
+},
+
+body:JSON.stringify({
+symbol
+})
+
+}
+);
+
+alert(
+`${symbol} added to watchlist`
+);
+
+}
+
+function tradeNow(symbol){
+
+window.location.href =
+`paper-trade.html?symbol=${symbol}`;
 
 }
 

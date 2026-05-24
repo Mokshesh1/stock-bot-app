@@ -532,7 +532,33 @@ def get_analytics(user_id):
             round(avg_return,2)
 
     })
+@app.route(
+    '/api/user/<int:user_id>/watchlist/<int:item_id>',
+    methods=['DELETE']
+)
+def delete_watchlist_item(
+    user_id,
+    item_id
+):
 
+    item = Watchlist.query.filter_by(
+        id=item_id,
+        user_id=user_id
+    ).first()
+
+    if not item:
+
+        return jsonify({
+            'success': False
+        }), 404
+
+    db.session.delete(item)
+
+    db.session.commit()
+
+    return jsonify({
+        'success': True
+    })
 # ==================== ERROR HANDLERS ====================
 
 @app.errorhandler(404)

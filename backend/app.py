@@ -363,32 +363,56 @@ class ScanSingle(Resource):
 # and ADD these routes below your current trade routes.
 
 from models import db, User, Trade, Watchlist
+import yfinance as yf
 
+@app.route('api/price/<symbol>', methods=['GET'])
 
-@app.route('/api/price/<symbol>')
-def get_price(symbol):
+def get_live_price(symbol):
 
-    mock_prices = {
+    try:
 
-        'RELIANCE': 2892.50,
-        'TCS': 4120.75,
-        'INFY': 1565.20,
-        'HDFCBANK': 1718.30
+        ticker = yf.Ticker(
+            f'{symbol.upper()}.NS'
+        )
 
-    }
+        data = ticker.history(
+            period='1d'
+        )
 
-    return jsonify({
+        if data.empty:
 
-        'success': True,
-        'symbol': symbol.upper(),
-        'price':
-            mock_prices.get(
+            return jsonify({
+
+                'success': False,
+                'message':
+                    'Symbol not found'
+
+            }), 404
+
+        price = float(
+            data['Close'].iloc[-1]
+        )
+
+        return jsonify({
+
+            'success': True,
+            'symbol':
                 symbol.upper(),
-                0
-            )
 
-    })
+            'price':
+                round(price,2)
 
+        })
+
+    except Exception as e:
+
+        return jsonify({
+
+            'success': False,
+            'message':
+                str(e)
+
+        }), 500
 
 @app.route(
     '/api/user/<int:user_id>/watchlist',

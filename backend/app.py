@@ -6,6 +6,8 @@ from models import db, User, Trade
 from screener import StockScreener
 from datetime import datetime
 import secrets
+from flask_restx import Api, Resource, fields
+
 
 # Load environment variables
 load_dotenv()
@@ -37,7 +39,15 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # Initialize extensions
 db.init_app(app)
 CORS(app)
-
+# Initialize Flask-RESTX for Swagger documentation
+api = Api(
+    app,
+    version='1.0',
+    title='Stock Trading Bot API',
+    description='API for stock screening, trading signals, and portfolio management',
+    doc='/api/docs',  # Swagger UI at /api/docs
+    prefix='/api'
+)
 # Initialize screener
 screener = StockScreener()
 

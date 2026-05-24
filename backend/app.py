@@ -358,6 +358,157 @@ class ScanSingle(Resource):
         except Exception as e:
             return {'success': False, 'message': str(e)}, 500
 
+
+# Full app.py is large, so keep your existing file
+# and ADD these routes below your current trade routes.
+
+from models import db, User, Trade, Watchlist
+
+
+@app.route('/api/price/<symbol>')
+def get_price(symbol):
+
+    mock_prices = {
+
+        'RELIANCE': 2892.50,
+        'TCS': 4120.75,
+        'INFY': 1565.20,
+        'HDFCBANK': 1718.30
+
+    }
+
+    return jsonify({
+
+        'success': True,
+        'symbol': symbol.upper(),
+        'price':
+            mock_prices.get(
+                symbol.upper(),
+                0
+            )
+
+    })
+
+
+@app.route(
+    '/api/user/<int:user_id>/watchlist',
+    methods=['GET']
+)
+def get_watchlist(user_id):
+
+    items = Watchlist.query.filter_by(
+        user_id=user_id
+    ).all()
+
+    return jsonify({
+
+        'success': True,
+
+        'watchlist': [
+
+            item.to_dict()
+            for item in items
+
+        ]
+
+    })
+
+
+@app.route(
+    '/api/user/<int:user_id>/watchlist',
+    methods=['POST']
+)
+def add_watchlist(user_id):
+
+    data = request.json
+
+    item = Watchlist(
+
+        user_id=user_id,
+        symbol=data['symbol']
+
+    )
+
+    db.session.add(item)
+
+    db.session.commit()
+
+    return jsonify({
+
+        'success': True,
+        'watchlist':
+            item.to_dict()
+
+    })
+
+
+@app.route(
+    '/api/user/<int:user_id>/analytics'
+)
+def get_analytics(user_id):
+
+    trades = Trade.query.filter_by(
+
+        user_id=user_id,
+        status='closed'
+
+    ).all()
+
+    if not trades:
+
+        return jsonify({
+
+            'success': True,
+            'max_drawdown': 0,
+            'best_strategy': None,
+            'avg_return': 0
+
+        })
+
+    profits = [
+
+        t.profit_loss or 0
+        for t in trades
+
+    ]
+
+    max_drawdown = min(profits)
+
+    avg_return = sum(profits) / len(profits)
+
+    strategy_map = {}
+
+    for trade in trades:
+
+        strategy_map.setdefault(
+            trade.strategy,
+            0
+        )
+
+        strategy_map[
+            trade.strategy
+        ] += trade.profit_loss or 0
+
+    best_strategy = max(
+        strategy_map,
+        key=strategy_map.get
+    )
+
+    return jsonify({
+
+        'success': True,
+
+        'max_drawdown':
+            round(max_drawdown,2),
+
+        'best_strategy':
+            best_strategy,
+
+        'avg_return':
+            round(avg_return,2)
+
+    })
+
 # ==================== ERROR HANDLERS ====================
 
 @app.errorhandler(404)

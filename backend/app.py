@@ -802,14 +802,12 @@ def run_backtest():
         days = int(data.get('days', 365))
 
         if not symbol:
-
             return jsonify({
                 'success': False,
                 'error': 'Symbol required'
             }), 400
 
         if not symbol.endswith('.NS'):
-
             symbol = f'{symbol}.NS'
 
         df = yf.download(
@@ -819,42 +817,46 @@ def run_backtest():
         )
 
         if df.empty:
-
             return jsonify({
                 'success': False,
                 'error': f'No historical data found for {symbol}'
             }), 404
 
-        df['EMA20'] = df['Close'].ewm(span=20).mean()
-        df['EMA50'] = df['Close'].ewm(span=50).mean()
+        entry_price = float(df['Close'].iloc[0])
+        exit_price = float(df['Close'].iloc[-1])
 
         total_return = round(
-            (
-                (df['Close'].iloc[-1] - df['Close'].iloc[0])
-                / df['Close'].iloc[0]
-            ) * 100,
+            ((exit_price - entry_price) / entry_price) * 100,
             2
         )
 
         return jsonify({
 
-            'symbol': symbol,
+            'symbol': str(symbol),
 
-            'strategy': strategy,
+            'strategy': str(strategy),
 
-            'total_return': total_return,
+            'total_return': float(total_return),
 
-            'total_trades': 0,
+            'total_trades': 1,
 
-            'win_rate': 0,
+            'win_rate': float(
+                100 if total_return > 0 else 0
+            ),
 
-            'avg_return': total_return,
+            'avg_return': float(total_return),
 
-            'max_drawdown': 0,
+            'max_drawdown': 0.0,
 
-            'expectancy': 0,
+            'expectancy': float(total_return),
 
-            'trades': []
+            'trades': [
+                {
+                    'entry': round(entry_price, 2),
+                    'exit': round(exit_price, 2),
+                    'return': float(total_return)
+                }
+            ]
 
         })
 
@@ -863,13 +865,9 @@ def run_backtest():
         print(f'Backtest error: {e}')
 
         return jsonify({
-
             'success': False,
-
             'error': str(e)
-
         }), 500
-
 # ==================== ERROR HANDLERS ====================
 
 @app.errorhandler(404)

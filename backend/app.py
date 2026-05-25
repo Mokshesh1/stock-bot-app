@@ -829,8 +829,7 @@ def run_backtest():
             'total_return': round(total_return, 2)
         })
 
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+   
 # ==================== ERROR HANDLERS ====================
 
 @app.errorhandler(404)

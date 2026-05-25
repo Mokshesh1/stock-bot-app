@@ -788,6 +788,87 @@ def delete_watchlist_item(
         'success': True
     })
 
+# ==================== BACKTEST ====================
+
+@app.route('/api/backtest', methods=['POST'])
+def run_backtest():
+
+    try:
+
+        data = request.get_json()
+
+        symbol = data.get('symbol')
+        strategy = data.get('strategy', 'ema_crossover')
+        days = int(data.get('days', 365))
+
+        if not symbol:
+
+            return jsonify({
+                'success': False,
+                'error': 'Symbol required'
+            }), 400
+
+        if not symbol.endswith('.NS'):
+
+            symbol = f'{symbol}.NS'
+
+        df = yf.download(
+            symbol,
+            period=f'{days}d',
+            progress=False
+        )
+
+        if df.empty:
+
+            return jsonify({
+                'success': False,
+                'error': f'No historical data found for {symbol}'
+            }), 404
+
+        df['EMA20'] = df['Close'].ewm(span=20).mean()
+        df['EMA50'] = df['Close'].ewm(span=50).mean()
+
+        total_return = round(
+            (
+                (df['Close'].iloc[-1] - df['Close'].iloc[0])
+                / df['Close'].iloc[0]
+            ) * 100,
+            2
+        )
+
+        return jsonify({
+
+            'symbol': symbol,
+
+            'strategy': strategy,
+
+            'total_return': total_return,
+
+            'total_trades': 0,
+
+            'win_rate': 0,
+
+            'avg_return': total_return,
+
+            'max_drawdown': 0,
+
+            'expectancy': 0,
+
+            'trades': []
+
+        })
+
+    except Exception as e:
+
+        print(f'Backtest error: {e}')
+
+        return jsonify({
+
+            'success': False,
+
+            'error': str(e)
+
+        }), 500
 
 # ==================== ERROR HANDLERS ====================
 

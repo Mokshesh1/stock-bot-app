@@ -787,6 +787,50 @@ def delete_watchlist_item(
     return jsonify({
         'success': True
     })
+
+from flask import Flask, request, jsonify
+import yfinance as yf
+
+app = Flask(__name__)
+
+
+@app.route('/api/backtest', methods=['POST'])
+def run_backtest():
+    try:
+        data = request.get_json()
+
+        symbol = data.get('symbol')
+        strategy = data.get('strategy', 'ema_crossover')
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+
+        if not symbol:
+            return jsonify({'error': 'Symbol required'}), 400
+
+        if '.NS' not in symbol:
+            symbol = f'{symbol}.NS'
+
+        df = yf.download(symbol, start=start_date, end=end_date)
+
+        if df.empty:
+            return jsonify({'error': 'No historical data found'}), 400
+
+        df['EMA20'] = df['Close'].ewm(span=20).mean()
+        df['EMA50'] = df['Close'].ewm(span=50).mean()
+
+        total_return = (
+            (df['Close'].iloc[-1] - df['Close'].iloc[0])
+            / df['Close'].iloc[0]
+        ) * 100
+
+        return jsonify({
+            'symbol': symbol,
+            'strategy': strategy,
+            'total_return': round(total_return, 2)
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 # ==================== ERROR HANDLERS ====================
 
 @app.errorhandler(404)

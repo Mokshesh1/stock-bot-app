@@ -190,22 +190,27 @@ class Signup(Resource):
         try:
             data = request.json
 
+            # Normalize inputs
+            name = data.get('name', '').strip()
+            email = data.get('email', '').strip().lower()
+            password = data.get('password', '')
+
             # Validate required fields
-            if not data.get('email') or not data.get('password') or not data.get('name'):
+            if not email or not password or not name:
                 return {
                     'success': False,
                     'message': 'Missing required fields: name, email, password'
                 }, 400
 
             # Validate password length
-            if len(data['password']) < 8:
+            if len(password) < 8:
                 return {
                     'success': False,
                     'message': 'Password must be at least 8 characters'
                 }, 400
 
             # Check if user already exists
-            if User.query.filter_by(email=data['email']).first():
+            if User.query.filter_by(email=email).first():
                 return {
                     'success': False,
                     'message': 'Email already registered'
@@ -213,8 +218,8 @@ class Signup(Resource):
 
             # Create new user
             user = User(
-                name=data['name'],
-                email=data['email']
+                name=name,
+                email=email
             )
             
             # Set password using bcrypt
@@ -256,20 +261,22 @@ class Login(Resource):
         - refresh_token: Long-lived (7d) JWT to get new access tokens
         """
         try:
-            data = request.json
+            data = request.json or {}
+            email = data.get('email', '').strip().lower()
+            password = data.get('password', '')
 
-            if not data.get('email') or not data.get('password'):
+            if not email or not password:
                 return {
                     'success': False,
                     'message': 'Email and password required'
                 }, 400
 
             # Find user
-            user = User.query.filter_by(email=data['email']).first()
+            user = User.query.filter_by(email=email).first()
 
             # Validate credentials
-            if not user or not user.check_password(data['password']):
-                logger.warning(f'Failed login attempt for {data["email"]}')
+            if not user or not user.check_password(password):
+                logger.warning(f'Failed login attempt for {email}')
                 return {
                     'success': False,
                     'message': 'Invalid email or password'

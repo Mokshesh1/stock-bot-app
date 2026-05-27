@@ -3,6 +3,7 @@ from datetime import datetime
 from cryptography.fernet import Fernet
 import os
 import bcrypt
+import hashlib
 
 db = SQLAlchemy()
 
@@ -137,13 +138,35 @@ class User(db.Model):
         ).decode('utf-8')
 
     def check_password(self, password):
-        """Verify password against bcrypt hash"""
+        """Verify password against bcrypt hash, with legacy SHA-256 fallback."""
         if not password or not self.password_hash:
             return False
-        return bcrypt.checkpw(
-            password.encode('utf-8'),
-            self.password_hash.encode('utf-8')
-        )
+
+        password_bytes = password.encode('utf-8')
+
+        # bcrypt hashes begin with $2a$, $2b$, or $2y$
+        if self.password_hash.startswith(('$2a$', '$2b$', '$2y$')):
+            try:
+                return bcrypt.checkpw(
+                    password_bytes,
+                    self.password_hash.encode('utf-8')
+                )
+            except ValueError:
+                return False
+
+        # Fallback for legacy SHA-256 password hashes.
+        legacy_hash = hashlib.sha256(password_bytes).hexdigest()
+        if legacy_hash == self.password_hash:
+            # Upgrade legacy hash to bcrypt on first successful login.
+            self.set_password(password)
+            try:
+                db.session.add(self)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+            return True
+
+        return False
 
     def set_zerodha_key(self, plaintext_key):
         """Encrypt and store Zerodha key"""

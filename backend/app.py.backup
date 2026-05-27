@@ -22,19 +22,6 @@ load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(
-    app,
-    resources={
-        r"/api/*": {
-            "origins": [
-                "https://stock-bot-app-five.vercel.app",
-                "http://localhost:3000",
-                "http://127.0.0.1:5500"
-            ]
-        }
-    },
-    supports_credentials=True
-)
 
 # Logging
 logging.basicConfig(level=logging.INFO)

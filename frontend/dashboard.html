@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="styles.css" />
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="script.js"></script>
 
 <style>
 body {
@@ -352,9 +353,6 @@ Close Position
 
 <script>
 
-const API_URL =
-'https://stock-bot-app-production.up.railway.app';
-
 let profitChart;
 let winLossChart;
 
@@ -377,17 +375,29 @@ return;
 const userId = user.id;
 
 const stats =
-await fetch(
-`${API_URL}/api/user/${userId}/stats`
-);
+    await authenticatedFetch(
+        `/api/user/${userId}/stats`
+    );
+
+if (!stats || !stats.ok) {
+    console.error('Failed to fetch stats');
+    window.location.href = 'login.html';
+    return;
+}
 
 const statsData =
 await stats.json();
 
 const trades =
-await fetch(
-`${API_URL}/api/user/${userId}/trades`
-);
+    await authenticatedFetch(
+        `/api/user/${userId}/trades`
+    );
+
+if (!trades || !trades.ok) {
+    console.error('Failed to fetch trades');
+    window.location.href = 'login.html';
+    return;
+}
 
 const tradesData =
 await trades.json();
@@ -610,22 +620,18 @@ document.getElementById(
 ).value
 );
 
-await fetch(
-`${API_URL}/api/trades/${tradeId}`,
-{
-method:'PUT',
+        const response = await authenticatedFetch(
+            `/api/trades/${tradeId}`,
+            {
+                method: 'PUT',
+                body: JSON.stringify({ exit_price: exitPrice })
+            }
+        );
 
-headers:{
-'Content-Type':
-'application/json'
-},
-
-body:JSON.stringify({
-exit_price:exitPrice
-})
-
-}
-);
+        if (!response || !response.ok) {
+            alert('Failed to close trade. Please login again.');
+            return;
+        }
 
 location.reload();
 

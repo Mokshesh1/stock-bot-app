@@ -257,8 +257,7 @@ Save Alert
 
 <script>
 
-const API_URL =
-'https://stock-bot-app-production.up.railway.app'
+// Uses shared `script.js` for API URL and auth
 
 let selectedSymbol=''
 
@@ -288,24 +287,11 @@ document.getElementById(
 'alertValue'
 ).value || null
 
-await authenticatedFetch(
-
-`https://stock-bot-app-production.up.railway.app/api/user/${user.id}/alerts`,
-
-{
-method:'POST',
-headers:{
-'Content-Type':
-'application/json'
-},
-body:JSON.stringify({
-symbol:selectedSymbol,
-alert_type,
-target_value
+await authenticatedFetch(`/api/user/${user.id}/alerts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ symbol: selectedSymbol, alert_type, target_value })
 })
-}
-
-)
 
 alert(
 'Alert created'
@@ -330,22 +316,11 @@ s=>s.trim()
 )
 : ['RELIANCE','INFY','TCS']
 
-const res = await authenticatedFetch(
-
-`https://stock-bot-app-production.up.railway.app/api/scan`,
-
-{
-method:'POST',
-headers:{
-'Content-Type':
-'application/json'
-},
-body:JSON.stringify({
-symbols
+const res = await authenticatedFetch(`/api/scan`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ symbols })
 })
-}
-
-)
 
 const data =
 await res.json()
@@ -429,22 +404,11 @@ const user = JSON.parse(
 localStorage.getItem('user')
 )
 
-await authenticatedFetch(
-
-`https://stock-bot-app-production.up.railway.app/api/user/${user.id}/watchlist`,
-
-{
-method:'POST',
-headers:{
-'Content-Type':
-'application/json'
-},
-body:JSON.stringify({
-symbol
+await authenticatedFetch(`/api/user/${user.id}/watchlist`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ symbol })
 })
-}
-
-)
 
 alert('Added to watchlist')
 
@@ -459,7 +423,7 @@ window.location.href=
 
 scanStocks()
 
-</script>
+<script src="script.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <footer class="mt-5 py-4 border-top bg-white">
         <div class="container">

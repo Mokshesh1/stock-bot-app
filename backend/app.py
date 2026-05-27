@@ -251,7 +251,6 @@ class Signup(Resource):
 @auth_ns.route('/login')
 class Login(Resource):
     @api.expect(login_model)
-    @api.marshal_with(login_response_model)
     def post(self):
         """
         Authenticate user and return JWT tokens

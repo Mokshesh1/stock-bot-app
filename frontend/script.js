@@ -1,10 +1,10 @@
 // ==================== API CONFIGURATION ====================
 
 // For LOCAL TESTING:
-const API_URL = 'http://localhost:5000';
+// const API_URL = 'http://localhost:5000';
 
 // For PRODUCTION (Railway):
-// const API_URL = 'https://stock-bot-app-production.up.railway.app';
+const API_URL = 'https://stock-bot-app-production.up.railway.app';
 
 // ==================== AUTHENTICATION ====================
 
@@ -19,7 +19,7 @@ if (loginForm) {
     const password = document.getElementById('password').value;
 
     try {
-      const response = await fetch(`${API_URL}/api/login`, {
+      const response = await fetch(`https://stock-bot-app-production.up.railway.app/api/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -61,7 +61,7 @@ if (signupForm) {
     const password = document.getElementById('password').value;
 
     try {
-      const response = await fetch(`${API_URL}/api/signup`, {
+      const response = await fetch(`https://stock-bot-app-production.up.railway.app/api/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password })
@@ -117,7 +117,7 @@ async function authenticatedFetch(endpoint, options = {}) {
     ...options.headers
   };
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
+  const response = await fetch(`https://stock-bot-app-production.up.railway.app${endpoint}`, {
     ...options,
     headers
   });
@@ -153,7 +153,7 @@ async function logout() {
     
     if (token) {
       // Tell backend to blacklist the token
-      await fetch(`${API_URL}/api/logout`, {
+      await fetch(`https://stock-bot-app-production.up.railway.app/api/logout`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

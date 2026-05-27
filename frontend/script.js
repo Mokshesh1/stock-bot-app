@@ -412,6 +412,6 @@ function addLogoutButton() {
 }
 
 // Uncomment to add logout button automatically
- if (localStorage.getItem('access_token')) {
-   addLogoutButton();
- }
+ // if (localStorage.getItem('access_token')) {
+  // addLogoutButton();
+// }

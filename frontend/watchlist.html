@@ -108,7 +108,7 @@ localStorage.getItem(
 
 if(!user)return;
 
-const response = await authenticatedFetch(`/api/user/${user.id}/watchlist`);
+const response = await Fetch(`/api/user/${user.id}/watchlist`);
 
 const data =
 await response.json();
@@ -208,7 +208,7 @@ localStorage.getItem(
 )
 );
 
-await authenticatedFetch(`/api/user/${user.id}/watchlist/${id}`, { method: 'DELETE' });
+await Fetch(`/api/user/${user.id}/watchlist/${id}`, { method: 'DELETE' });
 
 loadWatchlist();
 

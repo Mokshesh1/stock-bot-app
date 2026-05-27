@@ -110,8 +110,8 @@ localStorage.getItem(
 if(!user)return;
 
 const response =
-await fetch(
-`${API_URL}/api/user/${user.id}/watchlist`
+await authenticatedFetch(
+`https://stock-bot-app-production.up.railway.app/api/user/${user.id}/watchlist`
 );
 
 const data =
@@ -155,8 +155,8 @@ return;
 for(const item of items){
 
 const priceResponse =
-await fetch(
-`${API_URL}/api/price/${item.symbol}`
+await authenticatedFetch(
+`https://stock-bot-app-production.up.railway.app/api/price/${item.symbol}`
 );
 
 const priceData =
@@ -217,8 +217,8 @@ localStorage.getItem(
 )
 );
 
-await fetch(
-`${API_URL}/api/user/${user.id}/watchlist/${id}`,
+await authenticatedFetch(
+`https://stock-bot-app-production.up.railway.app/api/user/${user.id}/watchlist/${id}`,
 {
 method:'DELETE'
 }

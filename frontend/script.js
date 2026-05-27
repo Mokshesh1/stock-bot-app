@@ -19,7 +19,7 @@ if (loginForm) {
     const password = document.getElementById('password').value;
 
     try {
-      const response = await fetch(`https://stock-bot-app-production.up.railway.app/api/login`, {
+      const response = await authenticatedFetch(`https://stock-bot-app-production.up.railway.app/api/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -61,7 +61,7 @@ if (signupForm) {
     const password = document.getElementById('password').value;
 
     try {
-      const response = await fetch(`https://stock-bot-app-production.up.railway.app/api/signup`, {
+      const response = await authenticatedFetch(`https://stock-bot-app-production.up.railway.app/api/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password })
@@ -117,7 +117,7 @@ async function authenticatedFetch(endpoint, options = {}) {
     ...options.headers
   };
 
-  const response = await fetch(`https://stock-bot-app-production.up.railway.app${endpoint}`, {
+  const response = await authenticatedFetch(`https://stock-bot-app-production.up.railway.app${endpoint}`, {
     ...options,
     headers
   });
@@ -153,7 +153,7 @@ async function logout() {
     
     if (token) {
       // Tell backend to blacklist the token
-      await fetch(`https://stock-bot-app-production.up.railway.app/api/logout`, {
+      await authenticatedFetch(`https://stock-bot-app-production.up.railway.app/api/logout`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -175,7 +175,7 @@ async function logout() {
 // Load user stats
 async function loadStats(userId) {
   try {
-    const response = await authenticatedFetch(`/api/user/${userId}/stats`);
+    const response = await authenticatedFetch(`https://stock-bot-app-production.up.railway.app/api/user/${userId}/stats`);
     
     if (!response || !response.ok) {
       console.error('Failed to load stats');
@@ -202,7 +202,7 @@ async function loadStats(userId) {
 // Load user trades
 async function loadTrades(userId) {
   try {
-    const response = await authenticatedFetch(`/api/user/${userId}/trades`);
+    const response = await authenticatedFetch(`https://stock-bot-app-production.up.railway.app/api/user/${userId}/trades`);
     
     if (!response || !response.ok) {
       console.error('Failed to load trades');
@@ -238,7 +238,7 @@ async function loadTrades(userId) {
 // Load alerts
 async function loadAlerts(userId) {
   try {
-    const response = await authenticatedFetch(`/api/user/${userId}/alerts/check`);
+    const response = await authenticatedFetch(`https://stock-bot-app-production.up.railway.app/api/user/${userId}/alerts/check`);
     
     if (!response || !response.ok) {
       console.error('Failed to check alerts');
@@ -277,7 +277,7 @@ async function loadAlerts(userId) {
 // Load watchlist
 async function loadWatchlist(userId) {
   try {
-    const response = await authenticatedFetch(`/api/user/${userId}/watchlist`);
+    const response = await authenticatedFetch(`https://stock-bot-app-production.up.railway.app/api/user/${userId}/watchlist`);
     
     if (!response || !response.ok) {
       console.error('Failed to load watchlist');
@@ -325,7 +325,7 @@ async function loadWatchlist(userId) {
 // Remove from watchlist
 async function removeFromWatchlist(itemId, userId) {
   try {
-    const response = await authenticatedFetch(`/api/user/${userId}/watchlist/${itemId}`, {
+    const response = await authenticatedFetch(`https://stock-bot-app-production.up.railway.app/api/user/${userId}/watchlist/${itemId}`, {
       method: 'DELETE'
     });
 

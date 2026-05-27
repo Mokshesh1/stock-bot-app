@@ -291,8 +291,7 @@ Running backtest...
 try{
 
 const response =
-await fetch(
-`https://stock-bot-app-production.up.railway.app/api/backtest`,
+authenticatedFetch(`https://stock-bot-app-production.up.railway.app/api/backtest`,
 {
 method:'POST',
 headers:{

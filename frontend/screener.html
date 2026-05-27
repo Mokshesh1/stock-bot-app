@@ -288,9 +288,9 @@ document.getElementById(
 'alertValue'
 ).value || null
 
-await fetch(
+await authenticatedFetch(
 
-`${API_URL}/api/user/${user.id}/alerts`,
+`https://stock-bot-app-production.up.railway.app/api/user/${user.id}/alerts`,
 
 {
 method:'POST',
@@ -330,9 +330,9 @@ s=>s.trim()
 )
 : ['RELIANCE','INFY','TCS']
 
-const res = await fetch(
+const res = await authenticatedFetch(
 
-`${API_URL}/api/scan`,
+`https://stock-bot-app-production.up.railway.app/api/scan`,
 
 {
 method:'POST',
@@ -429,9 +429,9 @@ const user = JSON.parse(
 localStorage.getItem('user')
 )
 
-await fetch(
+await authenticatedFetch(
 
-`${API_URL}/api/user/${user.id}/watchlist`,
+`https://stock-bot-app-production.up.railway.app/api/user/${user.id}/watchlist`,
 
 {
 method:'POST',

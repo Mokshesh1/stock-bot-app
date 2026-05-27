@@ -190,8 +190,8 @@ localStorage.getItem(
 )
 );
 
-await fetch(
-`${API_URL}/api/trades`,
+await authenticatedFetch(
+`https://stock-bot-app-production.up.railway.app/api/trades`,
 {
 method:'POST',
 

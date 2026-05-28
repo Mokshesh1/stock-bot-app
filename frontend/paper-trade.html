@@ -1,12 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-        })
-
-        if (!response || !response.ok) {
-            alert('Failed to create trade. Please login again.');
-            return;
-        }
+<meta charset="UTF-8" />
 <meta
 name="viewport"
 content="width=device-width, initial-scale=1"
@@ -155,11 +150,8 @@ Paper trading only — no live orders are sent to any broker or exchange.
 
 </div>
 
+<script src="script.js"></script>
 <script>
- src="script.js"</script>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
-
 const params =
 new URLSearchParams(
 window.location.search
@@ -186,51 +178,31 @@ async function(e){
 
 e.preventDefault();
 
-const user =
-JSON.parse(
-localStorage.getItem(
-'user'
-)
-);
+const response = await authenticatedFetch(`/api/trades`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        symbol: document.getElementById('symbol').value,
+        entry_price: parseFloat(document.getElementById('entry_price').value),
+        quantity: parseInt(document.getElementById('quantity').value, 10),
+        strategy: document.getElementById('strategy').value
+    })
+});
 
-        const response = await authenticatedFetch(`/api/trades`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                user_id: user.id,
-                symbol: document.getElementById('symbol').value,
-
-entry_price:
-parseFloat(
-document.getElementById(
-'entry_price'
-).value
-),
-
-quantity:
-parseInt(
-document.getElementById(
-'quantity'
-).value
-),
-
-strategy:
-document.getElementById(
-'strategy'
-).value
-
-})
-
+if (!response || !response.ok) {
+    const errorData = response ? await response.json().catch(() => null) : null;
+    console.error('Trade creation failed', errorData);
+    alert('Unable to place trade. Please refresh and try again.');
+    return;
 }
-);
 
 window.location.href =
 'dashboard.html';
 
 }
 );
-
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <footer class="mt-5 py-4 border-top bg-white">
 

@@ -61,11 +61,11 @@ app = Flask(__name__)
 # Get CORS origins from environment or use defaults for development
 cors_origins = os.getenv(
     'CORS_ORIGINS',
-    'https://stock-bot-app-five.vercel.app/'
+    'https://stock-bot-app-five.vercel.app,https://stock-bot-app-production.up.railway.app,http://localhost:3000,http://localhost:5000,http://127.0.0.1:5500,null'
 ).split(',')
 
-# Strip whitespace from each origin
-cors_origins = [origin.strip() for origin in cors_origins]
+# Strip whitespace and trailing slashes from each origin
+cors_origins = [origin.strip().rstrip('/') for origin in cors_origins if origin.strip()]
 
 # Apply CORS configuration ONCE
 CORS(

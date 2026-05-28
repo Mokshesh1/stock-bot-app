@@ -33,7 +33,7 @@ if (loginForm) {
       const data = await response.json();
 
       if (data.success) {
-        // NEW: Store access_token and refresh_token (not old 'token')
+        // Store access_token and refresh_token
         localStorage.setItem('access_token', data.access_token);
         localStorage.setItem('refresh_token', data.refresh_token);
         localStorage.setItem('user', JSON.stringify(data.user));
@@ -130,14 +130,58 @@ async function authenticatedFetch(endpoint, options = {}) {
   });
 
   // Handle 401 (token expired/invalid)
+  if (response.status === 401 && !options._retry) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      return authenticatedFetch(endpoint, { ...options, _retry: true });
+    }
+  }
+
   if (response.status === 401) {
-    console.error('Token invalid or expired. Logging out.');
+    console.error('Token invalid or expired. Redirecting to login.');
     localStorage.clear();
     window.location.href = 'login.html';
     return null;
   }
 
   return response;
+}
+
+/**
+ * Refresh the access token using the stored refresh token.
+ */
+async function refreshAccessToken() {
+  const refreshToken = localStorage.getItem('refresh_token');
+  if (!refreshToken) {
+    console.warn('No refresh token available.');
+    return false;
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/api/refresh`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ refresh_token: refreshToken })
+    });
+
+    if (!response.ok) {
+      console.warn('Refresh token request failed:', response.status);
+      return false;
+    }
+
+    const data = await response.json();
+    if (data.success && data.access_token) {
+      localStorage.setItem('access_token', data.access_token);
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.error('Error refreshing access token:', error);
+    return false;
+  }
 }
 
 // ==================== USER MANAGEMENT ====================
